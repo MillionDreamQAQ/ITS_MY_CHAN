@@ -37,8 +37,8 @@
 **1. 克隆项目**
 
 ```bash
-git clone <repository-url>
-cd CHAN
+git clone https://github.com/MillionDreamQAQ/ITS_MY_CHAN.git
+cd ITS_MY_CHAN
 ```
 
 **2. 配置数据库**
