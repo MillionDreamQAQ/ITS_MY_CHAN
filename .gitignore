@@ -1,13 +1,8 @@
-./CLAUDE.md
-*.py[co]
 __pycache__
+*.py[co]
 *-checkpoint.ipynb
 *.vscode
 *.claude
 *.log
 *.db
-config.yaml
-OpenConfig.yaml
-gotify_push.py
-cos_config.yaml
 .env
