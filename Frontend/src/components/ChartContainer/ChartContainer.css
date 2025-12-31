@@ -1,0 +1,66 @@
+.chart-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+  overflow: hidden;
+  transition: background 0.3s ease;
+}
+
+.chart-wrapper {
+  flex: 3;
+  position: relative;
+  min-height: 400px;
+}
+
+.macd-wrapper {
+  flex: 1;
+  position: relative;
+  min-height: 150px;
+}
+
+/* Loading */
+.loading-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: background-color 0.3s ease;
+}
+
+body.dark-mode .loading-indicator {
+  background-color: rgba(0, 0, 0, 0.85);
+}
+
+.spinner {
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top: 4px solid #ffffff;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-indicator p {
+  color: #ffffff;
+  font-size: 16px;
+  margin: 0;
+}

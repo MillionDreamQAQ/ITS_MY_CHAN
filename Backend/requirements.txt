@@ -1,0 +1,9 @@
+pandas>=2.2.0
+psycopg[binary]>=3.2.0
+python-dotenv==1.0.0
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pypinyin==0.54.0
+requests>=2.31.0
+sse-starlette>=1.6.0
+akshare>=1.18.0
