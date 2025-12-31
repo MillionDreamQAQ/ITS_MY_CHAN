@@ -1,3 +1,4 @@
+CLAUDE.md
 *.py[co]
 __pycache__
 *-checkpoint.ipynb
