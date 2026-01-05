@@ -122,6 +122,7 @@ const StockSearchModal = ({
                         style={{
                           color: "#d9d9d9",
                           marginRight: "8px",
+                          marginLeft: "8px",
                           cursor: "pointer",
                           fontSize: "16px",
                         }}
