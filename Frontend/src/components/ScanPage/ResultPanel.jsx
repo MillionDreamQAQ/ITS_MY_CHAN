@@ -23,6 +23,11 @@ const ResultPanel = ({
     return types.map((t) => ({ text: t.toUpperCase(), value: t }));
   }, [results]);
 
+  const nameFilters = useMemo(() => {
+    const names = [...new Set(results.map((r) => r.name))];
+    return names.map((n) => ({ text: n, value: n }));
+  }, [results]);
+
   const handleExportExcel = () => {
     if (!results || results.length === 0) {
       message.warning("暂无数据可导出");
@@ -126,6 +131,8 @@ const ResultPanel = ({
       key: "name",
       width: 100,
       ellipsis: true,
+      filters: nameFilters,
+      onFilter: (value, record) => record.name.includes(value),
     },
     {
       title: "买点类型",
