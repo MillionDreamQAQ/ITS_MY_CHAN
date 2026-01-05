@@ -18,6 +18,10 @@ body.dark-mode .stock-list-item:hover {
 
 .favorite-star-icon {
   transition: transform 0.2s ease, color 0.2s ease;
+  margin-right: "8px";
+  margin-left: "8px";
+  cursor: "pointer";
+  font-size: "16px";
 }
 
 .favorite-star-icon:hover {

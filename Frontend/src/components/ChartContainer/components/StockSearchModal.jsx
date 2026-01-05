@@ -105,10 +105,6 @@ const StockSearchModal = ({
                       <StarFilled
                         style={{
                           color: "#fadb14",
-                          marginRight: "8px",
-                          marginLeft: "8px",
-                          cursor: "pointer",
-                          fontSize: "16px",
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -121,10 +117,6 @@ const StockSearchModal = ({
                       <StarOutlined
                         style={{
                           color: "#d9d9d9",
-                          marginRight: "8px",
-                          marginLeft: "8px",
-                          cursor: "pointer",
-                          fontSize: "16px",
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
