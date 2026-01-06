@@ -13,7 +13,7 @@ export interface BiPoint {
   end_time: string;
   begin_value: number;
   end_value: number;
-  direction: 'up' | 'down';
+  direction: "up" | "down";
 }
 
 export interface SegPoint {
@@ -22,7 +22,7 @@ export interface SegPoint {
   end_time: string;
   begin_value: number;
   end_value: number;
-  direction: 'up' | 'down';
+  direction: "up" | "down";
 }
 
 export interface BSPoint {
@@ -38,7 +38,7 @@ export interface ZSInfo {
   end_time: string;
   high: number;
   low: number;
-  direction: 'up' | 'down';
+  direction: "up" | "down";
 }
 
 export interface ChanResponse {
@@ -60,8 +60,8 @@ export interface ChanRequest {
 }
 
 export interface ScanRequest {
-  stock_pool: 'all' | 'boards' | 'custom';
-  boards?: string[];  // 板块列表: sh_main, sz_main, cyb, kcb, bj, etf
+  stock_pool: "all" | "boards" | "custom";
+  boards?: string[]; // 板块列表: sh_main, sz_main, cyb, kcb, bj, etf
   stock_codes?: string[];
   kline_type: string;
   buy_types: string[];
@@ -78,7 +78,7 @@ export interface ScanTaskResponse {
 
 export interface ScanProgress {
   task_id: string;
-  status: 'running' | 'completed' | 'cancelled' | 'error';
+  status: "running" | "completed" | "cancelled" | "error";
   progress: number;
   processed_count: number;
   total_count: number;
@@ -90,7 +90,7 @@ export interface ScanProgress {
 export interface ScanResultItem {
   code: string;
   name?: string;
-  bsp_type: string;
+  bsp_type: string[];
   bsp_time: string;
   bsp_value: number;
   is_buy: boolean;

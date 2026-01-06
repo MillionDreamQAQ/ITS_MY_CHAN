@@ -836,9 +836,10 @@ class ScanService:
             else:
                 bsp_type_values = [str(raw_type)]
 
-            # 3. 检查类型是否匹配
-            type_matched = any(t in target_types for t in bsp_type_values)
-            if not type_matched:
+            # 3. 提取所有匹配的类型
+            matched_types = [t for t in target_types if t in bsp_type_values]
+
+            if not matched_types:
                 skipped_type_mismatch += 1
                 logger.debug(
                     f"  类型不匹配: is_buy={is_buy}, bsp_type_values={bsp_type_values}, "
@@ -846,18 +847,9 @@ class ScanService:
                 )
                 continue
 
-            # 处理多类型情况
-            if len(bsp_type_values) > 1:
-                logger.debug(
-                    f"  单K线存在多个{'买' if is_buy else '卖'}点类型: bsp_type_values={bsp_type_values}, "
-                    f"已选择第一个匹配的类型"
-                )
-                for t in target_types:
-                    if t in bsp_type_values:
-                        bsp.type = t
-                        break
-            else:
-                bsp.type = bsp_type_values[0]
+            # 保留所有匹配的类型
+            bsp.type = matched_types
+            logger.debug(f"  类型匹配: is_buy={is_buy}, matched_types={matched_types}")
 
             # 4. 解析时间并过滤
             try:
@@ -873,7 +865,7 @@ class ScanService:
                 if bsp_time >= cutoff_time:
                     filtered_points.append(bsp)
                     logger.debug(
-                        f"  ✓ 符合条件: {'买点' if is_buy else '卖点'}, type={bsp_type_values}, time={bsp.time}"
+                        f"  ✓ 符合条件: {'买点' if is_buy else '卖点'}, types={matched_types}, time={bsp.time}"
                     )
                 else:
                     skipped_time_old += 1

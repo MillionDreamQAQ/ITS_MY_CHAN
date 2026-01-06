@@ -108,8 +108,7 @@ export function showMessage(api, key, type, content, duration) {
   });
 }
 
-export const getBsPointData = (typeStr, isBuy) => {
-  typeStr = typeStr.match(/'([^']+)'/)[1];
+export const getBsPointData = (types, isBuy) => {
   const typeMap = {
     1: isBuy ? "买1" : "卖1",
     2: isBuy ? "买2" : "卖2",
@@ -128,9 +127,15 @@ export const getBsPointData = (typeStr, isBuy) => {
     "3a": isBuy ? "中枢出现在1类后面的3类买点" : "中枢出现在1类前面的3类卖点",
     "3b": isBuy ? "中枢出现在1类前面的3类买点" : "中枢出现在1类后面的3类卖点",
   };
+
+  const texts = types.map((t) => typeMap[t] || `${isBuy ? "买" : "卖"}${t}`);
+  const descriptions = types.map(
+    (t) => descriptionMap[t] || `${isBuy ? "买点" : "卖点"}: ${t}`
+  );
+
   return {
-    text: typeMap[typeStr] || "Unknown",
-    description: descriptionMap[typeStr] || "Unknown",
+    text: texts.join(","),
+    description: descriptions.join(" + "),
   };
 };
 

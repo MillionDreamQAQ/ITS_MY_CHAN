@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS scan_results (
     task_id UUID NOT NULL REFERENCES scan_tasks (id) ON DELETE CASCADE,
     code VARCHAR(20) NOT NULL,
     name VARCHAR(50),
-    bsp_type VARCHAR(10) NOT NULL,
+    bsp_type TEXT[] NOT NULL,
     bsp_time VARCHAR(30) NOT NULL,
     bsp_value FLOAT NOT NULL,
     is_buy BOOLEAN NOT NULL DEFAULT TRUE,

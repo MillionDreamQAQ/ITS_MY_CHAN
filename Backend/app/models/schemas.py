@@ -44,7 +44,7 @@ class SegPoint(BaseModel):
 
 
 class BSPoint(BaseModel):
-    type: str
+    type: List[str]
     time: str
     value: float
     klu_idx: int
@@ -133,7 +133,7 @@ class ScanResultItem(BaseModel):
 
     code: str
     name: Optional[str] = None
-    bsp_type: str
+    bsp_type: List[str]
     bsp_time: str
     bsp_value: float
     is_buy: bool

@@ -214,11 +214,17 @@ class ChanService:
         bsp_list = kl_list.bs_point_lst.getSortedBspList()
 
         for bsp in bsp_list:
+            # 提取类型列表
+            if isinstance(bsp.type, list):
+                type_list = [t.value for t in bsp.type]
+            elif hasattr(bsp.type, "value"):
+                type_list = [bsp.type.value]
+            else:
+                type_list = [str(bsp.type)]
+
             bs_points.append(
                 BSPoint(
-                    type=(
-                        bsp.type.value if hasattr(bsp.type, "value") else str(bsp.type)
-                    ),
+                    type=type_list,
                     time=str(bsp.klu.time),
                     value=bsp.klu.close,
                     klu_idx=bsp.klu.idx,

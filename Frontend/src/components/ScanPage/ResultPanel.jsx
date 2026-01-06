@@ -23,6 +23,18 @@ const ResultPanel = ({
     return names.map((n) => ({ text: n, value: n }));
   }, [results]);
 
+  const bspTypeFilters = useMemo(() => {
+    const typeSet = new Set();
+    results.forEach((r) => {
+      r.bsp_type.forEach((type) => {
+        const key = `${r.is_buy ? "买" : "卖"}${type.toUpperCase()}`;
+        const value = `${r.is_buy ? "buy" : "sell"}-${type}`;
+        typeSet.add(JSON.stringify({ text: key, value }));
+      });
+    });
+    return Array.from(typeSet).map((item) => JSON.parse(item));
+  }, [results]);
+
   const handleExportExcel = () => {
     if (!results || results.length === 0) {
       message.warning("暂无数据可导出");
@@ -70,8 +82,8 @@ const ResultPanel = ({
         股票代码: item.code,
         股票名称: item.name || "-",
         类型: item.is_buy
-          ? "买" + item.bsp_type.toUpperCase()
-          : "卖" + item.bsp_type.toUpperCase(),
+          ? "买" + item.bsp_type.join(",").toUpperCase()
+          : "卖" + item.bsp_type.join(",").toUpperCase(),
         时间: item.bsp_time,
         价格: item.bsp_value.toFixed(2),
         K线级别: item.kline_type,
@@ -82,13 +94,13 @@ const ResultPanel = ({
 
       const ws2 = XLSX.utils.json_to_sheet(resultsData);
       const cols = [
-        { wch: 6 }, // 序号
-        { wch: 12 }, // 股票代码
-        { wch: 12 }, // 股票名称
-        { wch: 10 }, // 类型
-        { wch: 20 }, // 时间
-        { wch: 10 }, // 价格
-        { wch: 10 }, // K线级别
+        { wch: 6 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 10 },
+        { wch: 20 },
+        { wch: 10 },
+        { wch: 10 },
       ];
       if (viewingAll) cols.push({ wch: 15 });
       ws2["!cols"] = cols;
@@ -136,19 +148,37 @@ const ResultPanel = ({
       title: "买卖点类型",
       dataIndex: "bsp_type",
       key: "bsp_type",
-      width: 90,
-      render: (type, record) =>
-        record.is_buy ? (
-          <Tag color={BUY_TYPE_COLORS[type]}>
-            {record.is_buy ? "买" : "卖"}
-            {type.toUpperCase()}
-          </Tag>
-        ) : (
-          <Tag color={SELL_TYPE_COLORS[type]}>
-            {record.is_buy ? "买" : "卖"}
-            {type.toUpperCase()}
-          </Tag>
-        ),
+      width: 120,
+      filters: bspTypeFilters,
+      onFilter: (value, record) => {
+        const [isBuy, type] = value.split("-");
+        return (
+          record.is_buy === (isBuy === "buy") && record.bsp_type.includes(type)
+        );
+      },
+      render: (types, record) => (
+        <>
+          {types.map((type) =>
+            record.is_buy ? (
+              <Tag
+                key={type}
+                color={BUY_TYPE_COLORS[type]}
+                style={{ marginBottom: 4, marginRight: 4 }}
+              >
+                买{type.toUpperCase()}
+              </Tag>
+            ) : (
+              <Tag
+                key={type}
+                color={SELL_TYPE_COLORS[type]}
+                style={{ marginBottom: 4, marginRight: 4 }}
+              >
+                卖{type.toUpperCase()}
+              </Tag>
+            )
+          )}
+        </>
+      ),
     },
     {
       title: "时间",
@@ -246,7 +276,7 @@ const ResultPanel = ({
           columns={columns}
           dataSource={results}
           rowKey={(record) =>
-            `${record.code}-${record.bsp_time}-${record.bsp_type}`
+            `${record.code}-${record.bsp_time}-${record.bsp_type.join("-")}`
           }
           size="small"
           loading={loading}
