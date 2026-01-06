@@ -424,6 +424,7 @@ const ScanPage = () => {
                 total={totalTasks}
                 page={page}
                 pageSize={pageSize}
+                runningProgress={progress}
                 onPageChange={handlePageChange}
               />
             </div>

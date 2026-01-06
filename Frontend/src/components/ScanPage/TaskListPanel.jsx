@@ -16,6 +16,7 @@ const TaskListPanel = ({
   total = 0,
   page = 1,
   pageSize = 20,
+  runningProgress,
   onPageChange,
 }) => {
   const columns = [
@@ -43,9 +44,9 @@ const TaskListPanel = ({
       width: 60,
       render: (progress, record) =>
         record.status === "running" ? (
-          <Progress percent={progress} size="small" showInfo={false} />
+          <Progress percent={runningProgress.progress} size="small" showInfo={false} />
         ) : (
-          `${progress}%`
+          <Progress percent={progress} size="small" showInfo={false} />
         ),
     },
     {
