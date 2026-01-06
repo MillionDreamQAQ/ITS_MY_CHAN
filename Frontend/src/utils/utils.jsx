@@ -45,13 +45,22 @@ export const BOARD_OPTIONS = [
   { label: "ETF", value: "etf" },
 ];
 
-export const BSP_TYPE_COLORS = {
-  1: "green",
-  "1p": "cyan",
-  2: "blue",
-  "2s": "geekblue",
-  "3a": "purple",
-  "3b": "magenta",
+export const BUY_TYPE_COLORS = {
+  1: "#D32F2F",
+  "1p": "#B71C1C",
+  2: "#8B0000",
+  "2s": "#7F0000",
+  "3a": "#4A0000",
+  "3b": "#2B0000",
+};
+
+export const SELL_TYPE_COLORS = {
+  1: "#2E7D32",
+  "1p": "#1B5E20",
+  2: "#004D40",
+  "2s": "#003329",
+  "3a": "#00251A",
+  "3b": "#1A237E",
 };
 
 export const TASK_STATUS_COLORS = {
@@ -75,7 +84,8 @@ export const DEFAULT_SCAN_CONFIG = {
   boards: ["sh_main", "sz_main"],
   stockCodes: [],
   klineType: "day",
-  bspTypes: ["2", "2s"],
+  buyTypes: ["2", "2s"],
+  sellTypes: [],
   timeWindowDays: 1,
   limit: 1000,
 };

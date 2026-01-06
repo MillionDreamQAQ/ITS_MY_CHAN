@@ -64,7 +64,8 @@ export interface ScanRequest {
   boards?: string[];  // 板块列表: sh_main, sz_main, cyb, kcb, bj, etf
   stock_codes?: string[];
   kline_type: string;
-  bsp_types: string[];
+  buy_types: string[];
+  sell_types: string[];
   time_window_days: number;
   limit: number;
 }
@@ -128,7 +129,8 @@ export interface ScanTaskDB {
   boards: string[] | null;
   stock_codes: string[] | null;
   kline_type: string;
-  bsp_types: string[];
+  buy_types: string[];
+  sell_types: string[];
   time_window_days: number;
   kline_limit: number;
   total_count: number;
@@ -157,7 +159,8 @@ export interface AllResultsResponse {
     boards: string[] | null;
     stock_codes: string[] | null;
     kline_type: string;
-    bsp_types: string[];
+    buy_types: string[];
+    sell_types: string[];
     time_window_days: number;
     kline_limit: number;
     found_count: number;

@@ -1,6 +1,6 @@
 """
 批量扫描API
-提供股票买点批量扫描功能
+提供股票买卖点批量扫描功能
 """
 
 import asyncio
@@ -32,7 +32,8 @@ async def start_scan(request: ScanRequest):
             - stock_pool: 股票池类型 (all/custom)
             - stock_codes: 自定义股票代码列表
             - kline_type: K线级别
-            - bsp_types: 买卖点类型列表
+            - buy_types: 买点类型列表
+            - sell_types: 卖点类型列表
             - time_window_days: 时间窗口(天)
             - limit: K线数量限制
 

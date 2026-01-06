@@ -1,6 +1,6 @@
 """
 批量扫描服务
-使用多线程并行扫描股票买点，支持数据库持久化
+使用多线程并行扫描股票买卖点，支持数据库持久化
 """
 
 import sys
@@ -187,10 +187,11 @@ class ScanService:
                 """
                 INSERT INTO scan_tasks (
                     id, status, stock_pool, boards, stock_codes,
-                    kline_type, bsp_types, time_window_days, kline_limit,
+                    kline_type, buy_types, sell_types,
+                    time_window_days, kline_limit,
                     total_count, processed_count, found_count, created_at, started_at
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
                 )
                 """,
                 (
@@ -200,7 +201,8 @@ class ScanService:
                     request.boards,
                     request.stock_codes,
                     request.kline_type,
-                    request.bsp_types,
+                    request.buy_types,
+                    request.sell_types,
                     request.time_window_days,
                     request.limit,
                     total_count,
@@ -343,8 +345,8 @@ class ScanService:
             offset = (page - 1) * page_size
             cursor.execute(
                 f"""
-                SELECT id, status, stock_pool, boards, stock_codes, kline_type, bsp_types,
-                       time_window_days, total_count, processed_count, found_count,
+                SELECT id, status, stock_pool, boards, stock_codes, kline_type, buy_types, 
+                       sell_types, time_window_days, total_count, processed_count, found_count,
                        elapsed_time, created_at
                 FROM scan_tasks
                 {where_clause}
@@ -357,14 +359,14 @@ class ScanService:
             tasks = []
             for row in cursor.fetchall():
                 # 计算进度
-                total_count = row[8] or 1
-                processed_count = row[9] or 0
+                total_count = row[9] or 1
+                processed_count = row[10] or 0
                 progress = (
                     int(processed_count / total_count * 100) if total_count > 0 else 0
                 )
 
                 # 格式化时间
-                created_at = row[12]
+                created_at = row[13]
                 if isinstance(created_at, datetime):
                     created_at_str = created_at.strftime("%m-%d %H:%M")
                 else:
@@ -376,8 +378,8 @@ class ScanService:
                         status=row[1],
                         created_at=created_at_str,
                         progress=progress,
-                        found_count=row[10] or 0,
-                        elapsed_time=row[11] or 0,
+                        found_count=row[11] or 0,
+                        elapsed_time=row[12] or 0,
                     )
                 )
 
@@ -402,7 +404,8 @@ class ScanService:
             # 获取任务信息
             cursor.execute(
                 """
-                SELECT id, status, stock_pool, boards, stock_codes, kline_type, bsp_types,
+                SELECT id, status, stock_pool, boards, stock_codes, kline_type,
+                       buy_types, sell_types,
                        time_window_days, kline_limit, total_count, processed_count, found_count,
                        current_stock, error_message, created_at, started_at, completed_at, elapsed_time
                 FROM scan_tasks
@@ -431,18 +434,19 @@ class ScanService:
                 boards=row[3],
                 stock_codes=row[4],
                 kline_type=row[5],
-                bsp_types=row[6],
-                time_window_days=row[7],
-                kline_limit=row[8],
-                total_count=row[9] or 0,
-                processed_count=row[10] or 0,
-                found_count=row[11] or 0,
-                current_stock=row[12],
-                error_message=row[13],
-                created_at=format_time(row[14]),
-                started_at=format_time(row[15]),
-                completed_at=format_time(row[16]),
-                elapsed_time=row[17] or 0,
+                buy_types=row[6],
+                sell_types=row[7],
+                time_window_days=row[8],
+                kline_limit=row[9],
+                total_count=row[10] or 0,
+                processed_count=row[11] or 0,
+                found_count=row[12] or 0,
+                current_stock=row[13],
+                error_message=row[14],
+                created_at=format_time(row[15]),
+                started_at=format_time(row[16]),
+                completed_at=format_time(row[17]),
+                elapsed_time=row[18] or 0,
             )
 
             # 获取结果
@@ -541,8 +545,8 @@ class ScanService:
             cursor.execute(
                 f"""
                 SELECT t.id, t.status, t.stock_pool, t.boards, t.stock_codes,
-                       t.kline_type, t.bsp_types, t.time_window_days, t.kline_limit,
-                       t.found_count, t.elapsed_time, t.created_at
+                       t.kline_type, t.buy_types, t.sell_types, t.time_window_days,
+                       t.kline_limit, t.found_count, t.elapsed_time, t.created_at
                 FROM scan_tasks t
                 {where_clause}
                 ORDER BY t.created_at DESC
@@ -572,11 +576,12 @@ class ScanService:
                         "boards": row[3],
                         "stock_codes": row[4],
                         "kline_type": row[5],
-                        "bsp_types": row[6],
-                        "time_window_days": row[7],
-                        "kline_limit": row[8],
-                        "found_count": row[9] or 0,
-                        "elapsed_time": row[10] or 0,
+                        "buy_types": row[6],
+                        "sell_types": row[7],
+                        "time_window_days": row[8],
+                        "kline_limit": row[9],
+                        "found_count": row[10] or 0,
+                        "elapsed_time": row[11] or 0,
                         "created_at": created_at_str,
                     }
                 )
@@ -707,7 +712,7 @@ class ScanService:
     ) -> Optional[List[ScanResultItem]]:
         """
         扫描单只股票
-        返回该股票在时间窗口内的买点列表
+        返回该股票在时间窗口内的买卖点列表
         """
         if task.cancelled:
             return None
@@ -728,30 +733,33 @@ class ScanService:
             # 记录原始买卖点数量
             total_bsp = len(result.bs_points)
             buy_points = [bsp for bsp in result.bs_points if bsp.is_buy]
+            sell_points = [bsp for bsp in result.bs_points if not bsp.is_buy]
             logger.debug(
-                f"[{code}] 计算完成: 总买卖点={total_bsp}, 买点={len(buy_points)}"
+                f"[{code}] 计算完成: 总买卖点={total_bsp}, 买点={len(buy_points)}, 卖点={len(sell_points)}"
             )
 
-            # 记录买点详情（前5个）
-            if buy_points:
-                for i, bsp in enumerate(buy_points[:5]):
-                    logger.debug(
-                        f"  [{code}] 买点{i+1}: type={bsp.type}, time={bsp.time}, is_buy={bsp.is_buy}"
-                    )
-
-            # 过滤买点
-            recent_buy_points = self.filter_buy_points(
+            # 使用新的通用过滤函数
+            filtered_points = self.filter_bsp_points(
                 result.bs_points,
-                request.bsp_types,
+                request.buy_types,
+                request.sell_types,
                 request.time_window_days,
             )
 
             logger.debug(
-                f"[{code}] 过滤后买点数: {len(recent_buy_points)} (筛选类型={request.bsp_types}, 时间窗口={request.time_window_days}天)"
+                f"[{code}] 过滤后买卖点数: {len(filtered_points)} "
+                f"(买点类型={request.buy_types}, 卖点类型={request.sell_types}, "
+                f"时间窗口={request.time_window_days}天)"
             )
 
-            if recent_buy_points:
-                logger.info(f"[{code}] 找到 {len(recent_buy_points)} 个符合条件的买点")
+            if filtered_points:
+                buy_count = sum(1 for p in filtered_points if p.is_buy)
+                sell_count = len(filtered_points) - buy_count
+                logger.info(
+                    f"[{code}] 找到 {len(filtered_points)} 个符合条件的买卖点 "
+                    f"(买点: {buy_count}, 卖点: {sell_count})"
+                )
+
                 return [
                     ScanResultItem(
                         code=code,
@@ -762,7 +770,7 @@ class ScanService:
                         is_buy=bsp.is_buy,
                         kline_type=request.kline_type,
                     )
-                    for bsp in recent_buy_points
+                    for bsp in filtered_points
                 ]
             return None
 
@@ -770,33 +778,52 @@ class ScanService:
             logger.warning(f"扫描股票 {code} 失败: {e}", exc_info=True)
             return None
 
-    def filter_buy_points(
-        self, bs_points: list, bsp_types: List[str], time_window_days: int
+    def filter_bsp_points(
+        self,
+        bs_points: list,
+        buy_types: Optional[List[str]],
+        sell_types: Optional[List[str]],
+        time_window_days: int,
     ) -> list:
         """
-        过滤买点：
-        1. 只保留买点(is_buy=True)
-        2. 类型在bsp_types中
+        过滤买卖点：支持独立配置买点和卖点类型
+        1. 根据买卖方向选择对应的类型列表
+        2. 类型在对应的类型列表中
         3. 时间在最近N天内
+
+        Args:
+            bs_points: 所有买卖点列表
+            buy_types: 买点类型列表，如 ['1', '2', '2s']，None表示不筛选买点
+            sell_types: 卖点类型列表，如 ['1', '2']，None表示不筛选卖点
+            time_window_days: 时间窗口(天)
+
+        Returns:
+            符合条件的买卖点列表
         """
         cutoff_time = datetime.now() - timedelta(days=time_window_days)
-        recent_buy_points = []
+        filtered_points = []
 
         # 调试：记录过滤条件
         logger.debug(
-            f"过滤条件: cutoff_time={cutoff_time}, bsp_types={bsp_types}, time_window_days={time_window_days}"
+            f"过滤条件: cutoff_time={cutoff_time}, buy_types={buy_types}, sell_types={sell_types}, time_window_days={time_window_days}"
         )
 
-        skipped_not_buy = 0
+        skipped_direction = 0
         skipped_type_mismatch = 0
         skipped_time_old = 0
         skipped_parse_error = 0
 
         for bsp in bs_points:
-            if not bsp.is_buy:
-                skipped_not_buy += 1
+            # 1. 判断买卖方向
+            is_buy = bsp.is_buy
+            target_types = buy_types if is_buy else sell_types
+
+            # 如果该方向没有配置类型，跳过
+            if not target_types:
+                skipped_direction += 1
                 continue
 
+            # 2. 提取类型值
             # bsp.type 是一个字符串，格式如 "[<BSP_TYPE.T1P: '1p'>]"
             # 需要用正则提取其中的值如 '1p'
             bsp_type_values = []
@@ -809,44 +836,44 @@ class ScanService:
             else:
                 bsp_type_values = [str(raw_type)]
 
-            # 检查是否有任意类型匹配
-            type_matched = any(t in bsp_types for t in bsp_type_values)
+            # 3. 检查类型是否匹配
+            type_matched = any(t in target_types for t in bsp_type_values)
             if not type_matched:
                 skipped_type_mismatch += 1
                 logger.debug(
-                    f"  类型不匹配: bsp_type_values={bsp_type_values}, 期望={bsp_types}"
+                    f"  类型不匹配: is_buy={is_buy}, bsp_type_values={bsp_type_values}, "
+                    f"期望={'买点' if is_buy else '卖点'}={target_types}"
                 )
                 continue
-            else:
-                if len(bsp_type_values) > 1:
-                    logger.debug(
-                        f"  单K线存在多个买点类型: bsp_type_values={bsp_type_values}, 期望={bsp_types}, 已选择第一个匹配的买点"
-                    )
-                    for t in bsp_types:
-                        if t in bsp_type_values:
-                            bsp.type = t
-                            break
-                else:
-                    bsp.type = bsp_type_values[0]
 
-            # 解析买点时间
+            # 处理多类型情况
+            if len(bsp_type_values) > 1:
+                logger.debug(
+                    f"  单K线存在多个{'买' if is_buy else '卖'}点类型: bsp_type_values={bsp_type_values}, "
+                    f"已选择第一个匹配的类型"
+                )
+                for t in target_types:
+                    if t in bsp_type_values:
+                        bsp.type = t
+                        break
+            else:
+                bsp.type = bsp_type_values[0]
+
+            # 4. 解析时间并过滤
             try:
                 bsp_time_str = bsp.time
-                bsp_time = None
-
                 time_formats = "%Y/%m/%d %H:%M"
+
                 try:
                     bsp_time = datetime.strptime(bsp_time_str, time_formats)
                 except ValueError:
+                    skipped_parse_error += 1
                     continue
 
-                if bsp_time is None:
-                    raise ValueError(f"无法解析时间格式: {bsp_time_str}")
-
                 if bsp_time >= cutoff_time:
-                    recent_buy_points.append(bsp)
+                    filtered_points.append(bsp)
                     logger.debug(
-                        f"  ✓ 符合条件: type={bsp_type_values}, time={bsp.time}"
+                        f"  ✓ 符合条件: {'买点' if is_buy else '卖点'}, type={bsp_type_values}, time={bsp.time}"
                     )
                 else:
                     skipped_time_old += 1
@@ -855,14 +882,15 @@ class ScanService:
                     )
             except Exception as e:
                 skipped_parse_error += 1
-                logger.warning(f"解析买点时间失败: {bsp.time}, 错误: {e}")
+                logger.warning(f"解析买卖点时间失败: {bsp.time}, 错误: {e}")
                 continue
 
         logger.debug(
-            f"过滤统计: 非买点={skipped_not_buy}, 类型不匹配={skipped_type_mismatch}, 时间过早={skipped_time_old}, 解析失败={skipped_parse_error}, 符合条件={len(recent_buy_points)}"
+            f"过滤统计: 方向不匹配={skipped_direction}, 类型不匹配={skipped_type_mismatch}, "
+            f"时间过早={skipped_time_old}, 解析失败={skipped_parse_error}, 符合条件={len(filtered_points)}"
         )
 
-        return recent_buy_points
+        return filtered_points
 
     def start_scan(self, request: ScanRequest) -> str:
         """启动扫描任务"""
@@ -873,7 +901,8 @@ class ScanService:
         logger.info(
             f"扫描参数: stock_pool={request.stock_pool}, boards={request.boards}, kline_type={request.kline_type}"
         )
-        logger.info(f"买点类型: {request.bsp_types}")
+        logger.info(f"买点类型: {request.buy_types}")
+        logger.info(f"卖点类型: {request.sell_types}")
         logger.info(f"时间窗口: {request.time_window_days}天")
         logger.info(f"K线数量: {request.limit}")
 
@@ -954,7 +983,7 @@ class ScanService:
             logger.info(f"任务ID: {task.task_id}")
             logger.info(f"状态: {task.status}")
             logger.info(f"已扫描: {task.processed_count}/{task.total_count}")
-            logger.info(f"找到买点数: {task.found_count}")
+            logger.info(f"找到买卖点数: {task.found_count}")
             logger.info(f"耗时: {task.elapsed_time:.2f}秒")
 
             # 保存结果到数据库

@@ -18,7 +18,8 @@ import {
   BSP_TYPE_OPTIONS,
   KLINE_OPTIONS,
   BOARD_OPTIONS,
-  BSP_TYPE_COLORS,
+  BUY_TYPE_COLORS,
+  SELL_TYPE_COLORS,
 } from "../../utils/utils";
 import "./ScanConfigPanel.css";
 
@@ -48,8 +49,12 @@ const ScanConfigPanel = ({
     setConfig({ ...config, klineType: value });
   };
 
-  const handleBspTypesChange = (checkedValues) => {
-    setConfig({ ...config, bspTypes: checkedValues });
+  const handleBuyTypesChange = (checkedValues) => {
+    setConfig({ ...config, buyTypes: checkedValues });
+  };
+
+  const handleSellTypesChange = (checkedValues) => {
+    setConfig({ ...config, sellTypes: checkedValues });
   };
 
   const handleTimeWindowChange = (value) => {
@@ -144,13 +149,30 @@ const ScanConfigPanel = ({
           <span className="config-label">买点类型：</span>
           <div className="config-content bsp-types">
             <Checkbox.Group
-              value={config.bspTypes}
-              onChange={handleBspTypesChange}
+              value={config.buyTypes}
+              onChange={handleBuyTypesChange}
               disabled={readOnly}
             >
               {BSP_TYPE_OPTIONS.map((opt) => (
-                <Checkbox key={opt.value} value={opt.value}>
-                  <Tag color={BSP_TYPE_COLORS[opt.value]}>{opt.label}</Tag>
+                <Checkbox key={`buy-${opt.value}`} value={opt.value}>
+                  <Tag color={BUY_TYPE_COLORS[opt.value]}>{opt.label}</Tag>
+                </Checkbox>
+              ))}
+            </Checkbox.Group>
+          </div>
+        </div>
+
+        <div className="config-row">
+          <span className="config-label">卖点类型：</span>
+          <div className="config-content bsp-types">
+            <Checkbox.Group
+              value={config.sellTypes}
+              onChange={handleSellTypesChange}
+              disabled={readOnly}
+            >
+              {BSP_TYPE_OPTIONS.map((opt) => (
+                <Checkbox key={`sell-${opt.value}`} value={opt.value}>
+                  <Tag color={SELL_TYPE_COLORS[opt.value]}>{opt.label}</Tag>
                 </Checkbox>
               ))}
             </Checkbox.Group>
@@ -198,7 +220,7 @@ const ScanConfigPanel = ({
                 <span>
                   已扫描: {progress.processed_count}/{progress.total_count}
                 </span>
-                <span>找到买点: {progress.found_count}</span>
+                <span>找到买卖点: {progress.found_count}</span>
                 {progress.current_stock && (
                   <span>当前: {progress.current_stock}</span>
                 )}

@@ -1,9 +1,10 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import List, Optional
 from datetime import datetime
 
 
 # ============ 缠论分析相关模型 ============
+
 
 class ChanRequest(BaseModel):
     code: str = Field(..., description="股票代码，例如 sz.000001")
@@ -70,40 +71,45 @@ class ChanResponse(BaseModel):
 
 # ============ 扫描功能相关模型 ============
 
+
 class ScanRequest(BaseModel):
     """扫描请求"""
+
     stock_pool: str = Field(
-        "all",
-        description="股票池类型: all=全市场, boards=按板块, custom=自定义"
+        "all", description="股票池类型: all=全市场, boards=按板块, custom=自定义"
     )
     boards: Optional[List[str]] = Field(
         None,
-        description="板块列表，当stock_pool=boards时使用。可选值: sh_main(沪市主板), sz_main(深市主板), cyb(创业板), kcb(科创板), bj(北交所), etf(ETF)"
+        description="板块列表，当stock_pool=boards时使用。可选值: sh_main(沪市主板), sz_main(深市主板), cyb(创业板), kcb(科创板), bj(北交所), etf(ETF)",
     )
     stock_codes: Optional[List[str]] = Field(
-        None,
-        description="自定义股票代码列表，当stock_pool=custom时使用"
+        None, description="自定义股票代码列表，当stock_pool=custom时使用"
     )
     kline_type: str = Field(
-        "day",
-        description="K线级别: day/week/month/1m/5m/15m/30m/60m"
+        "day", description="K线级别: day/week/month/1m/5m/15m/30m/60m"
     )
-    bsp_types: List[str] = Field(
-        ["1", "1p", "2", "2s", "3a", "3b"],
-        description="要扫描的买卖点类型"
+    buy_types: Optional[List[str]] = Field(
+        None, description="要扫描的买点类型，可选值: 1, 1p, 2, 2s, 3a, 3b"
+    )
+    sell_types: Optional[List[str]] = Field(
+        None, description="要扫描的卖点类型，可选值: 1, 1p, 2, 2s, 3a, 3b"
     )
     time_window_days: int = Field(
-        3,
-        description="时间窗口(天)，扫描最近N天内出现的买点"
+        3, description="时间窗口(天)，扫描最近N天内出现的买卖点"
     )
-    limit: int = Field(
-        500,
-        description="每只股票获取的K线数量"
-    )
+    limit: int = Field(500, description="每只股票获取的K线数量")
+
+    @model_validator(mode="after")
+    def validate_bsp_types(self):
+        """验证买卖点类型配置，确保至少选择一种类型"""
+        if not self.buy_types and not self.sell_types:
+            raise ValueError("必须至少选择一种买点或卖点类型")
+        return self
 
 
 class ScanTaskResponse(BaseModel):
     """扫描任务启动响应"""
+
     task_id: str
     status: str = "started"
     total_stocks: int
@@ -111,6 +117,7 @@ class ScanTaskResponse(BaseModel):
 
 class ScanProgress(BaseModel):
     """扫描进度"""
+
     task_id: str
     status: str  # running / completed / cancelled / error
     progress: int  # 0-100
@@ -123,6 +130,7 @@ class ScanProgress(BaseModel):
 
 class ScanResultItem(BaseModel):
     """单个扫描结果"""
+
     code: str
     name: Optional[str] = None
     bsp_type: str
@@ -134,6 +142,7 @@ class ScanResultItem(BaseModel):
 
 class ScanResultResponse(BaseModel):
     """扫描结果响应"""
+
     task_id: str
     status: str
     results: List[ScanResultItem]
@@ -144,15 +153,18 @@ class ScanResultResponse(BaseModel):
 
 # ============ 扫描任务数据库模型 ============
 
+
 class ScanTaskDB(BaseModel):
     """数据库中的扫描任务"""
+
     id: str
     status: str
     stock_pool: str
     boards: Optional[List[str]] = None
     stock_codes: Optional[List[str]] = None
     kline_type: str
-    bsp_types: List[str]
+    buy_types: Optional[List[str]] = None
+    sell_types: Optional[List[str]] = None
     time_window_days: int
     kline_limit: int
     total_count: int = 0
@@ -168,6 +180,7 @@ class ScanTaskDB(BaseModel):
 
 class ScanTaskListItem(BaseModel):
     """任务列表项"""
+
     id: str
     status: str
     created_at: str
@@ -178,6 +191,7 @@ class ScanTaskListItem(BaseModel):
 
 class ScanTaskListResponse(BaseModel):
     """任务列表响应"""
+
     tasks: List[ScanTaskListItem]
     total: int
     page: int
@@ -186,5 +200,6 @@ class ScanTaskListResponse(BaseModel):
 
 class ScanTaskDetailResponse(BaseModel):
     """任务详情响应（含结果）"""
+
     task: ScanTaskDB
     results: List  # ScanResultItem list

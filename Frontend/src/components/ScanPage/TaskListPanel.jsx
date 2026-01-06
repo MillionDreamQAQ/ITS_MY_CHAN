@@ -49,7 +49,7 @@ const TaskListPanel = ({
         ),
     },
     {
-      title: "买点",
+      title: "买卖点",
       dataIndex: "found_count",
       key: "found_count",
       width: 60,

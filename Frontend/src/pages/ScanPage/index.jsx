@@ -96,7 +96,8 @@ const ScanPage = () => {
         boards: detail.task.boards || [],
         stockCodes: detail.task.stock_codes || [],
         klineType: detail.task.kline_type,
-        bspTypes: detail.task.bsp_types,
+        buyTypes: detail.task.buy_types,
+        sellTypes: detail.task.sell_types,
         timeWindowDays: detail.task.time_window_days,
         limit: detail.task.kline_limit,
       });
@@ -148,7 +149,8 @@ const ScanPage = () => {
         stock_codes:
           config.stockPool === "custom" ? config.stockCodes : undefined,
         kline_type: config.klineType,
-        bsp_types: config.bspTypes,
+        buy_types: config.buyTypes,
+        sell_types: config.sellTypes,
         time_window_days: config.timeWindowDays,
         limit: config.limit,
       };
@@ -392,7 +394,7 @@ const ScanPage = () => {
           >
             返回图表
           </Button>
-          <span className="page-title">扫描买点</span>
+          <span className="page-title">扫描买卖点</span>
           <div style={{ width: 100 }} />
         </div>
 

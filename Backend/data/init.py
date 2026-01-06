@@ -87,7 +87,8 @@ CREATE TABLE IF NOT EXISTS scan_tasks (
     boards TEXT [],
     stock_codes TEXT [],
     kline_type VARCHAR(10) NOT NULL,
-    bsp_types TEXT [] NOT NULL,
+    buy_types TEXT [],
+    sell_types TEXT [],
     time_window_days INTEGER NOT NULL DEFAULT 3,
     kline_limit INTEGER NOT NULL DEFAULT 500,
     -- 进度
@@ -120,10 +121,12 @@ CREATE TABLE IF NOT EXISTS scan_results (
 -- 创建索引
 CREATE INDEX IF NOT EXISTS idx_scan_tasks_created_at ON scan_tasks (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_scan_results_task_id ON scan_results (task_id);
+CREATE INDEX IF NOT EXISTS idx_scan_results_is_buy ON scan_results (is_buy);
 """
 
 
 # 表创建函数
+
 
 def create_stocks_table():
     """创建stocks表及索引"""
@@ -204,6 +207,7 @@ def create_all_tables():
 # ============================================================================
 # 3. 基金拆分数据导入
 # ============================================================================
+
 
 class FundSplitImporter:
     """基金拆分数据导入器"""
@@ -306,15 +310,21 @@ class FundSplitImporter:
                     # 解析日期
                     if isinstance(split_date, str):
                         try:
-                            split_date = datetime.strptime(split_date, "%Y-%m-%d").date()
+                            split_date = datetime.strptime(
+                                split_date, "%Y-%m-%d"
+                            ).date()
                         except ValueError:
                             try:
-                                split_date = datetime.strptime(split_date, "%Y/%m/%d").date()
+                                split_date = datetime.strptime(
+                                    split_date, "%Y/%m/%d"
+                                ).date()
                             except ValueError:
                                 logger.warning(f"无法解析日期: {split_date}")
                                 continue
 
-                    records.append((fund_code, fund_name, split_date, split_type, split_ratio))
+                    records.append(
+                        (fund_code, fund_name, split_date, split_type, split_ratio)
+                    )
 
                 # 批量插入
                 db.cursor.executemany(insert_sql, records)
@@ -424,7 +434,13 @@ class FundSplitImporter:
             )
             logger.info("-" * 90)
 
-            for fund_code, fund_name, split_date, split_type, split_ratio in db.cursor.fetchall():
+            for (
+                fund_code,
+                fund_name,
+                split_date,
+                split_type,
+                split_ratio,
+            ) in db.cursor.fetchall():
                 logger.info(
                     "%-15s %-30s %-15s %-20s %-10.4f",
                     fund_code,
@@ -469,6 +485,7 @@ class FundSplitImporter:
 # ============================================================================
 # 4. 股票/指数/ETF数据导入
 # ============================================================================
+
 
 class StockDataImporter:
     """股票、指数和 ETF 基本信息导入器"""
@@ -951,6 +968,7 @@ class StockDataImporter:
 # 5. 主初始化流程
 # ============================================================================
 
+
 def initialize_database():
     """
     初始化数据库：创建所有表并导入数据
@@ -1011,7 +1029,9 @@ def initialize_database():
         logger.info(f"    - 更新: {results['stocks']['updated']} 条")
 
     # 基金拆分数据结果
-    logger.info(f"  基金拆分数据: {'成功' if results['fund_splits'].get('success') else '失败'}")
+    logger.info(
+        f"  基金拆分数据: {'成功' if results['fund_splits'].get('success') else '失败'}"
+    )
     if results["fund_splits"].get("success"):
         logger.info(f"    - 总记录: {results['fund_splits']['total_records']} 条")
         logger.info(f"    - 涉及基金: {results['fund_splits']['unique_funds']} 只")
@@ -1048,5 +1068,6 @@ if __name__ == "__main__":
     except Exception as e:
         logger.error(f"初始化过程中发生错误: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

@@ -3,7 +3,7 @@ import { Table, Tag, Empty, Button, Space, message } from "antd";
 import { FileExcelOutlined, EyeOutlined } from "@ant-design/icons";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-import { BSP_TYPE_COLORS } from "../../utils/utils";
+import { BUY_TYPE_COLORS, SELL_TYPE_COLORS } from "../../utils/utils";
 import "./ResultPanel.css";
 
 /**
@@ -18,11 +18,6 @@ const ResultPanel = ({
   viewingAll = false,
   allResultsData = null,
 }) => {
-  const bspTypeFilters = useMemo(() => {
-    const types = [...new Set(results.map((r) => r.bsp_type))];
-    return types.map((t) => ({ text: t.toUpperCase(), value: t }));
-  }, [results]);
-
   const nameFilters = useMemo(() => {
     const names = [...new Set(results.map((r) => r.name))];
     return names.map((n) => ({ text: n, value: n }));
@@ -46,9 +41,10 @@ const ResultPanel = ({
           股票池: task.stock_pool,
           板块: task.boards ? task.boards.join(", ") : "-",
           K线级别: task.kline_type,
-          买点类型: task.bsp_types.join(", "),
+          买点类型: task.buy_types.join(", "),
+          卖点类型: task.sell_types.join(", "),
           "时间窗口(天)": task.time_window_days,
-          找到买点数: task.found_count,
+          找到买卖点数: task.found_count,
           "耗时(秒)": task.elapsed_time.toFixed(2),
         }));
 
@@ -73,8 +69,10 @@ const ResultPanel = ({
         序号: index + 1,
         股票代码: item.code,
         股票名称: item.name || "-",
-        买点类型: item.bsp_type.toUpperCase(),
-        买点时间: item.bsp_time,
+        类型: item.is_buy
+          ? "买" + item.bsp_type.toUpperCase()
+          : "卖" + item.bsp_type.toUpperCase(),
+        时间: item.bsp_time,
         价格: item.bsp_value.toFixed(2),
         K线级别: item.kline_type,
         ...(viewingAll && {
@@ -84,13 +82,13 @@ const ResultPanel = ({
 
       const ws2 = XLSX.utils.json_to_sheet(resultsData);
       const cols = [
-        { wch: 6 },
-        { wch: 12 },
-        { wch: 12 },
-        { wch: 10 },
-        { wch: 20 },
-        { wch: 10 },
-        { wch: 10 },
+        { wch: 6 }, // 序号
+        { wch: 12 }, // 股票代码
+        { wch: 12 }, // 股票名称
+        { wch: 10 }, // 类型
+        { wch: 20 }, // 时间
+        { wch: 10 }, // 价格
+        { wch: 10 }, // K线级别
       ];
       if (viewingAll) cols.push({ wch: 15 });
       ws2["!cols"] = cols;
@@ -135,18 +133,25 @@ const ResultPanel = ({
       onFilter: (value, record) => record.name.includes(value),
     },
     {
-      title: "买点类型",
+      title: "买卖点类型",
       dataIndex: "bsp_type",
       key: "bsp_type",
       width: 90,
-      filters: bspTypeFilters,
-      onFilter: (value, record) => record.bsp_type === value,
-      render: (type) => (
-        <Tag color={BSP_TYPE_COLORS[type]}>{type.toUpperCase()}</Tag>
-      ),
+      render: (type, record) =>
+        record.is_buy ? (
+          <Tag color={BUY_TYPE_COLORS[type]}>
+            {record.is_buy ? "买" : "卖"}
+            {type.toUpperCase()}
+          </Tag>
+        ) : (
+          <Tag color={SELL_TYPE_COLORS[type]}>
+            {record.is_buy ? "买" : "卖"}
+            {type.toUpperCase()}
+          </Tag>
+        ),
     },
     {
-      title: "买点时间",
+      title: "时间",
       dataIndex: "bsp_time",
       key: "bsp_time",
       width: 140,
@@ -200,7 +205,7 @@ const ResultPanel = ({
             taskStatus
               ? taskStatus === "running"
                 ? "扫描进行中..."
-                : "未找到符合条件的买点"
+                : "未找到符合条件的买卖点"
               : "请选择一个任务查看结果"
           }
         />
