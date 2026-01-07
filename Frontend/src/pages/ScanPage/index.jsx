@@ -470,6 +470,7 @@ const ScanPage = () => {
                 limit: 2000,
               }}
               stockSearch={stockSearch}
+              canSearch={false}
               onKlineTypeChange={handleChartKlineTypeChange}
               onSetMAType={handleSetMAType}
               onToggleMAPeriod={handleToggleMAPeriod}

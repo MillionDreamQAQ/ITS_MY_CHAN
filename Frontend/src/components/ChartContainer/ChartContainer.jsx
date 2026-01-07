@@ -39,6 +39,8 @@ const ChartContainer = ({
   favorites = [],
   currentStock = {},
   stockSearch = {},
+  canSearch = true,
+  showTitle = true,
   onStockChange,
   onKlineTypeChange,
   onLimitChange,
@@ -60,6 +62,8 @@ const ChartContainer = ({
 
   // Ctrl+F 快捷键监听
   useEffect(() => {
+    if (!canSearch || !showTitle) return;
+
     const handleKeyDown = (e) => {
       if (e.ctrlKey && e.key === "f") {
         e.preventDefault();
@@ -69,7 +73,7 @@ const ChartContainer = ({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [canSearch, showTitle]);
 
   const COLORS = useMemo(() => getColors(darkMode), [darkMode]);
   const LINE_SERIES_CONFIGS = useMemo(
@@ -606,14 +610,17 @@ const ChartContainer = ({
           className="chart-wrapper"
           ref={(el) => (containerRefs.current.main = el)}
         >
-          <StockTitleBar
-            stockName={stockName}
-            stockCode={currentStock.code || data?.code || ""}
-            isFavorite={favorites.includes(currentStock.code)}
-            onSearchClick={() => setSearchModalOpen(true)}
-            onToggleFavorite={() => onToggleFavorite?.(currentStock.code)}
-            darkMode={darkMode}
-          />
+          {showTitle && (
+            <StockTitleBar
+              stockName={stockName}
+              stockCode={currentStock.code || data?.code || ""}
+              isFavorite={favorites.includes(currentStock.code)}
+              canSearch={canSearch}
+              onSearchClick={() => setSearchModalOpen(true)}
+              onToggleFavorite={() => onToggleFavorite?.(currentStock.code)}
+              darkMode={darkMode}
+            />
+          )}
           <ChartControlPanel
             klineType={currentStock.klineType}
             limit={currentStock.limit}
@@ -647,18 +654,20 @@ const ChartContainer = ({
           className="macd-wrapper"
           ref={(el) => (containerRefs.current.macd = el)}
         />
-        <StockSearchModal
-          open={searchModalOpen}
-          onClose={() => setSearchModalOpen(false)}
-          onSelectStock={(code) => {
-            onStockChange?.(code);
-            setSearchModalOpen(false);
-          }}
-          favorites={favorites}
-          onToggleFavorite={onToggleFavorite}
-          stocksLoading={stockSearch.loading}
-          search={stockSearch.search}
-        />
+        {canSearch && showTitle && (
+          <StockSearchModal
+            open={searchModalOpen}
+            onClose={() => setSearchModalOpen(false)}
+            onSelectStock={(code) => {
+              onStockChange?.(code);
+              setSearchModalOpen(false);
+            }}
+            favorites={favorites}
+            onToggleFavorite={onToggleFavorite}
+            stocksLoading={stockSearch.loading}
+            search={stockSearch.search}
+          />
+        )}
       </div>
     </ChartContextMenu>
   );
