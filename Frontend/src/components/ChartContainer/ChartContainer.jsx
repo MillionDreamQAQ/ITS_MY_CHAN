@@ -44,6 +44,8 @@ const ChartContainer = ({
   canEditLevel = true,
   showControl = true,
   showKlineInfo = true,
+  showVolume = true,
+  showMACD = true,
   onStockChange,
   onKlineTypeChange,
   onLimitChange,
@@ -530,10 +532,15 @@ const ChartContainer = ({
           );
         }
       }
+
+      // 恢复MACD显示状态
+      if (containerRefs.current.macd) {
+        containerRefs.current.macd.style.display = showMACD ? "flex" : "none";
+      }
     }
 
     setLoading(false);
-  }, [data, klineData, resetMeasure]);
+  }, [data, klineData, resetMeasure, showMACD]);
 
   // 指标可见性控制 - 合并为单个 useEffect
   useEffect(() => {
@@ -574,6 +581,26 @@ const ChartContainer = ({
       }
     });
   }, [indicators.maPeriods]);
+
+  // 成交量可见性控制
+  useEffect(() => {
+    if (seriesRefs.current.volume) {
+      seriesRefs.current.volume.applyOptions({
+        visible: showVolume,
+      });
+    }
+  }, [showVolume]);
+
+  // MACD副图可见性控制
+  useEffect(() => {
+    if (containerRefs.current.macd) {
+      containerRefs.current.macd.style.display = showMACD ? "flex" : "none";
+
+      if (!showMACD && chartRefs.current.macd) {
+        chartRefs.current.macd.clearCrosshairPosition();
+      }
+    }
+  }, [showMACD]);
 
   // MA 类型切换时重新计算
   useEffect(() => {

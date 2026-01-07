@@ -183,4 +183,5 @@ export const getChartConfig = (
   localization: {
     dateFormat: "yyyy-MM-dd",
   },
+  autoSize: true,
 });
