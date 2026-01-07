@@ -64,9 +64,7 @@ export const useChartSync = (mainChartRef, subChartRef, seriesRef) => {
   // 从 MACD 图同步时间轴到主图
   const syncTimeFromSub = useCallback(() => {
     if (subChartRef.current && mainChartRef.current) {
-      const subRange = subChartRef.current
-        .timeScale()
-        .getVisibleLogicalRange();
+      const subRange = subChartRef.current.timeScale().getVisibleLogicalRange();
       if (subRange) {
         mainChartRef.current.timeScale().setVisibleLogicalRange(subRange);
       }

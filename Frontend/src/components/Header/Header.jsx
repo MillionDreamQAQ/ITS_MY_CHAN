@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "antd";
-import { BulbOutlined, BulbFilled, ScanOutlined } from "@ant-design/icons";
+import { BulbOutlined, BulbFilled, ScanOutlined, AppstoreOutlined } from "@ant-design/icons";
 import "./Header.css";
 
 const Header = ({ darkMode, onToggleDarkMode }) => {
@@ -19,6 +19,13 @@ const Header = ({ darkMode, onToggleDarkMode }) => {
           />
         </div>
         <div className="header-right">
+          <Button
+            type="text"
+            icon={<AppstoreOutlined />}
+            onClick={() => navigate("/multi-level")}
+            className="multi-level-trigger"
+            title="多级别联立"
+          />
           <Button
             type="text"
             icon={<ScanOutlined />}

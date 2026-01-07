@@ -38,6 +38,18 @@
   transform: rotate(20deg);
 }
 
+.multi-level-trigger {
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.multi-level-trigger:hover {
+  color: var(--primary-color);
+}
+
 .scan-trigger {
   font-size: 18px;
   display: flex;

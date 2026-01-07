@@ -157,7 +157,8 @@ export const getChartConfig = (
   width,
   height,
   showTimeVisible = true,
-  darkMode = false
+  darkMode = false,
+  isAutoSize = true
 ) => ({
   width,
   height,
@@ -183,5 +184,5 @@ export const getChartConfig = (
   localization: {
     dateFormat: "yyyy-MM-dd",
   },
-  autoSize: true,
+  autoSize: isAutoSize,
 });

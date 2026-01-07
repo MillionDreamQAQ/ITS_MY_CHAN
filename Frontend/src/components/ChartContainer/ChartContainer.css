@@ -10,7 +10,6 @@
 .chart-wrapper {
   flex: 3;
   position: relative;
-  min-height: 400px;
 }
 
 .sub-chart-wrapper {

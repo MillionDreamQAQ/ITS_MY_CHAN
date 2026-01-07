@@ -46,6 +46,9 @@ const ChartContainer = ({
   showKlineInfo = true,
   showVolume = true,
   showSubChart = true,
+  chartRefOut,
+  seriesRefOut,
+  dataRefOut,
   onStockChange,
   onKlineTypeChange,
   onLimitChange,
@@ -128,6 +131,19 @@ const ChartContainer = ({
     setKlineInfo,
     setLoading
   );
+
+  // 暴露图表实例给父组件-多级别联动
+  useEffect(() => {
+    if (chartRefOut && chartRefs.current.main) {
+      chartRefOut.current = chartRefs.current.main;
+    }
+    if (seriesRefOut) {
+      seriesRefOut.current = seriesRefs.current;
+    }
+    if (dataRefOut) {
+      dataRefOut.current = dataRefs.current.kline;
+    }
+  }, [chartRefOut, seriesRefOut, dataRefOut]);
 
   // 图表同步
   useChartSync(
@@ -312,6 +328,11 @@ const ChartContainer = ({
     resetMeasure();
 
     dataRefs.current.kline = klineData;
+
+    if (dataRefOut) {
+      dataRefOut.current = klineData;
+    }
+
     seriesRefs.current.candlestick.setData(klineData);
 
     if (seriesRefs.current.volume) {
@@ -535,7 +556,9 @@ const ChartContainer = ({
 
       // 恢复MACD显示状态
       if (containerRefs.current.sub) {
-        containerRefs.current.sub.style.display = showSubChart ? "flex" : "none";
+        containerRefs.current.sub.style.display = showSubChart
+          ? "flex"
+          : "none";
       }
     }
 

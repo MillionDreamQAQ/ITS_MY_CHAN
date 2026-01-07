@@ -392,7 +392,7 @@ const ScanPage = () => {
             icon={<ArrowLeftOutlined />}
             onClick={() => navigate("/")}
           >
-            返回图表
+            返回主页
           </Button>
           <span className="page-title">扫描买卖点</span>
           <div style={{ width: 100 }} />
