@@ -41,6 +41,9 @@ const ChartContainer = ({
   stockSearch = {},
   canSearch = true,
   showTitle = true,
+  canEditLevel = true,
+  showControl = true,
+  showKlineInfo = true,
   onStockChange,
   onKlineTypeChange,
   onLimitChange,
@@ -621,15 +624,18 @@ const ChartContainer = ({
               darkMode={darkMode}
             />
           )}
-          <ChartControlPanel
-            klineType={currentStock.klineType}
-            limit={currentStock.limit}
-            onKlineTypeChange={onKlineTypeChange}
-            onLimitChange={onLimitChange}
-            onRefresh={onRefresh}
-            darkMode={darkMode}
-          />
-          <KlineInfoPanel klineInfo={klineInfo} />
+          {showControl && (
+            <ChartControlPanel
+              klineType={currentStock.klineType}
+              limit={currentStock.limit}
+              onKlineTypeChange={onKlineTypeChange}
+              onLimitChange={onLimitChange}
+              onRefresh={onRefresh}
+              darkMode={darkMode}
+              canEditLevel={canEditLevel}
+            />
+          )}
+          {showKlineInfo && <KlineInfoPanel klineInfo={klineInfo} />}
           <ChartTooltip ref={(el) => (containerRefs.current.tooltip = el)} />
           {measureRect && (
             <div

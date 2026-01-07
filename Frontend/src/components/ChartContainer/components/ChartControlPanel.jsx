@@ -25,6 +25,7 @@ const ChartControlPanel = ({
   onLimitChange,
   onRefresh,
   darkMode,
+  canEditLevel = true,
 }) => {
   const [localLimit, setLocalLimit] = useState(limit);
   const timerRef = useRef(null);
@@ -55,7 +56,8 @@ const ChartControlPanel = ({
               type={klineType === item.value ? "primary" : "default"}
               size="medium"
               style={{ width: 32 }}
-              onClick={() => onKlineTypeChange(item.value)}
+              disabled={klineType === item.value ? false : !canEditLevel}
+              onClick={() => canEditLevel && onKlineTypeChange(item.value)}
             >
               {item.label}
             </Button>
