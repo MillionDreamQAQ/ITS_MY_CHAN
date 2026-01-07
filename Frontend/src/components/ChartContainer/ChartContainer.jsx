@@ -45,7 +45,7 @@ const ChartContainer = ({
   showControl = true,
   showKlineInfo = true,
   showVolume = true,
-  showMACD = true,
+  showSubChart = true,
   onStockChange,
   onKlineTypeChange,
   onLimitChange,
@@ -92,13 +92,13 @@ const ChartContainer = ({
 
   const containerRefs = useRef({
     main: null,
-    macd: null,
+    sub: null,
     tooltip: null,
   });
 
   const chartRefs = useRef({
     main: null,
-    macd: null,
+    sub: null,
   });
 
   const seriesRefs = useRef({
@@ -132,7 +132,7 @@ const ChartContainer = ({
   // 图表同步
   useChartSync(
     { current: chartRefs.current.main },
-    { current: chartRefs.current.macd },
+    { current: chartRefs.current.sub },
     seriesRefs
   );
 
@@ -206,7 +206,7 @@ const ChartContainer = ({
 
   // 主题切换
   useEffect(() => {
-    if (!chartRefs.current.main || !chartRefs.current.macd) return;
+    if (!chartRefs.current.main || !chartRefs.current.sub) return;
 
     const themeOptions = {
       layout: {
@@ -226,7 +226,7 @@ const ChartContainer = ({
     };
 
     chartRefs.current.main.applyOptions(themeOptions);
-    chartRefs.current.macd.applyOptions(themeOptions);
+    chartRefs.current.sub.applyOptions(themeOptions);
 
     if (seriesRefs.current.candlestick) {
       seriesRefs.current.candlestick.applyOptions({
@@ -472,9 +472,9 @@ const ChartContainer = ({
     }
 
     // 添加 MACD
-    if (chartRefs.current.macd) {
+    if (chartRefs.current.sub) {
       seriesRefs.current.macdList.forEach((series) => {
-        chartRefs.current.macd.removeSeries(series);
+        chartRefs.current.sub.removeSeries(series);
       });
       seriesRefs.current.macdList = [];
 
@@ -486,7 +486,7 @@ const ChartContainer = ({
           macdData.dif.length > 0 &&
           macdData.dea.length > 0
         ) {
-          const macdHistogramSeries = chartRefs.current.macd.addSeries(
+          const macdHistogramSeries = chartRefs.current.sub.addSeries(
             HistogramSeries,
             {
               color: COLORS.downColor,
@@ -502,19 +502,19 @@ const ChartContainer = ({
           seriesRefs.current.histogram = macdHistogramSeries;
           macdHistogramSeries.setData(macdData.histogram);
 
-          const difLineSeries = chartRefs.current.macd.addSeries(
+          const difLineSeries = chartRefs.current.sub.addSeries(
             LineSeries,
             LINE_SERIES_CONFIGS.dif
           );
           difLineSeries.setData(macdData.dif);
 
-          const deaLineSeries = chartRefs.current.macd.addSeries(
+          const deaLineSeries = chartRefs.current.sub.addSeries(
             LineSeries,
             LINE_SERIES_CONFIGS.dea
           );
           deaLineSeries.setData(macdData.dea);
 
-          const zeroLineSeries = chartRefs.current.macd.addSeries(
+          const zeroLineSeries = chartRefs.current.sub.addSeries(
             LineSeries,
             LINE_SERIES_CONFIGS.zero
           );
@@ -534,13 +534,13 @@ const ChartContainer = ({
       }
 
       // 恢复MACD显示状态
-      if (containerRefs.current.macd) {
-        containerRefs.current.macd.style.display = showMACD ? "flex" : "none";
+      if (containerRefs.current.sub) {
+        containerRefs.current.sub.style.display = showSubChart ? "flex" : "none";
       }
     }
 
     setLoading(false);
-  }, [data, klineData, resetMeasure, showMACD]);
+  }, [data, klineData, resetMeasure, showSubChart]);
 
   // 指标可见性控制 - 合并为单个 useEffect
   useEffect(() => {
@@ -593,14 +593,14 @@ const ChartContainer = ({
 
   // MACD副图可见性控制
   useEffect(() => {
-    if (containerRefs.current.macd) {
-      containerRefs.current.macd.style.display = showMACD ? "flex" : "none";
+    if (containerRefs.current.sub) {
+      containerRefs.current.sub.style.display = showSubChart ? "flex" : "none";
 
-      if (!showMACD && chartRefs.current.macd) {
-        chartRefs.current.macd.clearCrosshairPosition();
+      if (!showSubChart && chartRefs.current.sub) {
+        chartRefs.current.sub.clearCrosshairPosition();
       }
     }
-  }, [showMACD]);
+  }, [showSubChart]);
 
   // MA 类型切换时重新计算
   useEffect(() => {
@@ -684,8 +684,8 @@ const ChartContainer = ({
           />
         </div>
         <div
-          className="macd-wrapper"
-          ref={(el) => (containerRefs.current.macd = el)}
+          className="sub-chart-wrapper"
+          ref={(el) => (containerRefs.current.sub = el)}
         />
         {canSearch && showTitle && (
           <StockSearchModal

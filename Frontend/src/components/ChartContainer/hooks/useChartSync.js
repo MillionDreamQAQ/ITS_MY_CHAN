@@ -1,30 +1,30 @@
 import { useCallback, useEffect } from "react";
 
-export const useChartSync = (mainChartRef, macdChartRef, seriesRef) => {
+export const useChartSync = (mainChartRef, subChartRef, seriesRef) => {
   // 主图十字线移动时同步 MACD 图
   const handleMainCrosshairMove = useCallback(
     (param) => {
-      if (param.time && seriesRef.current?.histogram && macdChartRef.current) {
-        const macdHistogramData = seriesRef.current.histogram.dataByIndex(
+      if (param.time && seriesRef.current?.histogram && subChartRef.current) {
+        const subHistogramData = seriesRef.current.histogram.dataByIndex(
           param.logical
         );
 
-        if (macdHistogramData) {
-          macdChartRef.current.setCrosshairPosition(
-            macdHistogramData.value,
+        if (subHistogramData) {
+          subChartRef.current.setCrosshairPosition(
+            subHistogramData.value,
             param.time,
             seriesRef.current.histogram
           );
         }
-      } else if (macdChartRef.current) {
-        macdChartRef.current.clearCrosshairPosition();
+      } else if (subChartRef.current) {
+        subChartRef.current.clearCrosshairPosition();
       }
     },
-    [macdChartRef, seriesRef]
+    [subChartRef, seriesRef]
   );
 
   // MACD 图十字线移动时同步主图
-  const handleMACDCrosshairMove = useCallback(
+  const handleSubCrosshairMove = useCallback(
     (param) => {
       if (
         param.time &&
@@ -51,41 +51,41 @@ export const useChartSync = (mainChartRef, macdChartRef, seriesRef) => {
 
   // 从主图同步时间轴到 MACD 图
   const syncTimeFromMain = useCallback(() => {
-    if (mainChartRef.current && macdChartRef.current) {
+    if (mainChartRef.current && subChartRef.current) {
       const mainRange = mainChartRef.current
         .timeScale()
         .getVisibleLogicalRange();
       if (mainRange) {
-        macdChartRef.current.timeScale().setVisibleLogicalRange(mainRange);
+        subChartRef.current.timeScale().setVisibleLogicalRange(mainRange);
       }
     }
-  }, [mainChartRef, macdChartRef]);
+  }, [mainChartRef, subChartRef]);
 
   // 从 MACD 图同步时间轴到主图
-  const syncTimeFromMacd = useCallback(() => {
-    if (macdChartRef.current && mainChartRef.current) {
-      const macdRange = macdChartRef.current
+  const syncTimeFromSub = useCallback(() => {
+    if (subChartRef.current && mainChartRef.current) {
+      const subRange = subChartRef.current
         .timeScale()
         .getVisibleLogicalRange();
-      if (macdRange) {
-        mainChartRef.current.timeScale().setVisibleLogicalRange(macdRange);
+      if (subRange) {
+        mainChartRef.current.timeScale().setVisibleLogicalRange(subRange);
       }
     }
-  }, [mainChartRef, macdChartRef]);
+  }, [mainChartRef, subChartRef]);
 
   // 订阅图表同步事件
   useEffect(() => {
-    if (!mainChartRef.current || !macdChartRef.current) return;
+    if (!mainChartRef.current || !subChartRef.current) return;
 
     mainChartRef.current.subscribeCrosshairMove(handleMainCrosshairMove);
-    macdChartRef.current.subscribeCrosshairMove(handleMACDCrosshairMove);
+    subChartRef.current.subscribeCrosshairMove(handleSubCrosshairMove);
 
     mainChartRef.current
       .timeScale()
       .subscribeVisibleLogicalRangeChange(syncTimeFromMain);
-    macdChartRef.current
+    subChartRef.current
       .timeScale()
-      .subscribeVisibleLogicalRangeChange(syncTimeFromMacd);
+      .subscribeVisibleLogicalRangeChange(syncTimeFromSub);
 
     return () => {
       if (mainChartRef.current) {
@@ -95,19 +95,19 @@ export const useChartSync = (mainChartRef, macdChartRef, seriesRef) => {
           .unsubscribeVisibleLogicalRangeChange(syncTimeFromMain);
       }
 
-      if (macdChartRef.current) {
-        macdChartRef.current.unsubscribeCrosshairMove(handleMACDCrosshairMove);
-        macdChartRef.current
+      if (subChartRef.current) {
+        subChartRef.current.unsubscribeCrosshairMove(handleSubCrosshairMove);
+        subChartRef.current
           .timeScale()
-          .unsubscribeVisibleLogicalRangeChange(syncTimeFromMacd);
+          .unsubscribeVisibleLogicalRangeChange(syncTimeFromSub);
       }
     };
   }, [
     mainChartRef,
-    macdChartRef,
+    subChartRef,
     handleMainCrosshairMove,
-    handleMACDCrosshairMove,
+    handleSubCrosshairMove,
     syncTimeFromMain,
-    syncTimeFromMacd,
+    syncTimeFromSub,
   ]);
 };

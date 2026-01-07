@@ -13,7 +13,7 @@
   min-height: 400px;
 }
 
-.macd-wrapper {
+.sub-chart-wrapper {
   flex: 1;
   position: relative;
   min-height: 150px;

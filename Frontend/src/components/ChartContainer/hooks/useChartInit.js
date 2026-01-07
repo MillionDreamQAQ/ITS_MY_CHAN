@@ -22,7 +22,7 @@ export const useChartInit = (
 
     setLoading(true);
 
-    if (!containerRefs.current.main || !containerRefs.current.macd) return;
+    if (!containerRefs.current.main || !containerRefs.current.sub) return;
 
     const containerWidth =
       containerRefs.current.main.parentElement?.clientWidth ||
@@ -41,16 +41,16 @@ export const useChartInit = (
     chartRefs.current.main = mainChart;
 
     // 创建 MACD 图
-    const macdChart = createChart(
-      containerRefs.current.macd,
+    const subChart = createChart(
+      containerRefs.current.sub,
       getChartConfig(
         containerWidth,
-        containerRefs.current.macd.clientHeight || CHART_SIZES.macdHeight,
+        containerRefs.current.sub.clientHeight || CHART_SIZES.subHeight,
         false,
         false
       )
     );
-    chartRefs.current.macd = macdChart;
+    chartRefs.current.sub = subChart;
 
     // 创建 K 线系列
     const candlestickSeries = mainChart.addSeries(CandlestickSeries, {
@@ -91,10 +91,10 @@ export const useChartInit = (
           height: containerRefs.current.main.clientHeight,
         });
       }
-      if (containerRefs.current.macd && resizeWidth) {
-        macdChart.applyOptions({
+      if (containerRefs.current.sub && resizeWidth) {
+        subChart.applyOptions({
           width: resizeWidth,
-          height: containerRefs.current.macd.clientHeight,
+          height: containerRefs.current.sub.clientHeight,
         });
       }
     };
@@ -182,7 +182,7 @@ export const useChartInit = (
         seriesRefs.current.markers.detach();
       }
       mainChart.remove();
-      macdChart.remove();
+      subChart.remove();
       isInitializedRef.current = false;
     };
   }, []);

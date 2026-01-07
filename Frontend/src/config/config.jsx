@@ -150,7 +150,7 @@ export const FORMAT_CONFIG = {
 
 export const CHART_SIZES = {
   mainHeight: 400,
-  macdHeight: 150,
+  subHeight: 150,
 };
 
 export const getChartConfig = (
