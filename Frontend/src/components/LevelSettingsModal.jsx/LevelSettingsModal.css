@@ -1,0 +1,34 @@
+.chart-config-item {
+  padding: 12px;
+  margin-bottom: 8px;
+  user-select: none;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  transition: all 0.2s;
+}
+
+.chart-config-item.dragging {
+  opacity: 0.5;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.drag-handle {
+  cursor: grab;
+  font-size: 18px;
+  color: var(--text-secondary);
+  margin-right: 8px;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.add-chart-btn {
+  width: 100%;
+  border-style: dashed;
+}
+
+.height-input-group {
+  margin-top: 16px;
+}

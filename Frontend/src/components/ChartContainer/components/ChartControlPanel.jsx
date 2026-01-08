@@ -26,6 +26,7 @@ const ChartControlPanel = ({
   onRefresh,
   darkMode,
   canEditLevel = true,
+  canEditLength = true,
 }) => {
   const [localLimit, setLocalLimit] = useState(limit);
   const timerRef = useRef(null);
@@ -64,25 +65,29 @@ const ChartControlPanel = ({
           ))}
         </Space.Compact>
       </div>
-      <InputNumber
-        value={localLimit}
-        onChange={handleLocalLimitChange}
-        placeholder="数据条数"
-        changeOnWheel={true}
-        step={1000}
-        min={1000}
-        max={20000}
-        size="medium"
-        className="limit-input"
-      />
-      <Button
-        type="default"
-        icon={<ReloadOutlined />}
-        onClick={onRefresh}
-        className="refresh-button"
-        title="刷新数据"
-        size="medium"
-      />
+      {canEditLength && (
+        <InputNumber
+          value={localLimit}
+          onChange={handleLocalLimitChange}
+          placeholder="数据条数"
+          changeOnWheel={true}
+          step={1000}
+          min={1000}
+          max={20000}
+          size="medium"
+          className="limit-input"
+        />
+      )}
+      {canEditLength && (
+        <Button
+          type="default"
+          icon={<ReloadOutlined />}
+          onClick={onRefresh}
+          className="refresh-button"
+          title="刷新数据"
+          size="medium"
+        />
+      )}
     </div>
   );
 };

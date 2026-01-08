@@ -7,11 +7,12 @@ import { useCallback, useEffect } from "react";
  * - 十字线同步：当一个图表的十字线移动时，其他图表的十字线也移动到对应时间
  * - 缩放同步：当一个图表缩放时，其他图表也同步缩放到对应的时间范围
  *
- * @param {Object} chartRefs - 三个图表的引用 { top, middle, bottom }
- * @param {Object} seriesRefs - 三个图表的系列引用 { top, middle, bottom }
- * @param {Object} dataRefs - 三个图表的数据引用 { top, middle, bottom }
+ * @param {Object} chartRefs - 图表引用 Map
+ * @param {Object} seriesRefs - 图表系列引用 Map
+ * @param {Object} dataRefs - 图表数据引用 Map
+ * @param {Array} chartsData - 图表数据数组（用于触发重新订阅）
  */
-export const useMultiLevelSync = (chartRefs, seriesRefs, dataRefs) => {
+export const useMultiLevelSync = (chartRefs, seriesRefs, dataRefs, chartsData = []) => {
   /**
    * 在目标K线数据中查找与给定时间戳最接近的K线
    * 使用二分查找优化性能: O(log n)
@@ -138,45 +139,25 @@ export const useMultiLevelSync = (chartRefs, seriesRefs, dataRefs) => {
     [findClosestKlineByTime]
   );
 
-  // 订阅所有图表的事件
   useEffect(() => {
-    if (
-      !chartRefs.current.top.current ||
-      !chartRefs.current.middle.current ||
-      !chartRefs.current.bottom.current
-    ) {
-      // if (!chartRefs.top || !chartRefs.middle || !chartRefs.bottom) {
-      return;
-    }
+    const chartIds = Array.from(chartRefs.current.keys());
 
-    const charts = [
-      {
-        name: "top",
-        chart: chartRefs.current.top,
-        series: seriesRefs.current.top,
-        data: dataRefs.current.top,
-      },
-      {
-        name: "middle",
-        chart: chartRefs.current.middle,
-        series: seriesRefs.current.middle,
-        data: dataRefs.current.middle,
-      },
-      {
-        name: "bottom",
-        chart: chartRefs.current.bottom,
-        series: seriesRefs.current.bottom,
-        data: dataRefs.current.bottom,
-      },
-    ];
+    if (chartIds.length < 2) return;
+
+    const charts = chartIds.map(id => ({
+      id,
+      chart: { current: chartRefs.current.get(id) },
+      series: { current: seriesRefs.current.get(id) },
+      data: { current: dataRefs.current.get(id) }
+    })).filter(c => c.chart.current && c.series.current && c.data.current);
+
+    if (charts.length < 2) return;
 
     const subscriptions = [];
 
-    // 为每个图表订阅事件
     charts.forEach((source) => {
-      const targets = charts.filter((c) => c.name !== source.name);
+      const targets = charts.filter((c) => c.id !== source.id);
 
-      // 十字线移动事件
       const crosshairHandler = syncCrosshair(targets);
       source.chart.current.subscribeCrosshairMove(crosshairHandler);
       subscriptions.push({
@@ -185,7 +166,6 @@ export const useMultiLevelSync = (chartRefs, seriesRefs, dataRefs) => {
         type: "crosshair",
       });
 
-      // 时间轴缩放事件
       const rangeHandler = syncVisibleRange(source.chart, targets);
       source.chart.current
         .timeScale()
@@ -197,7 +177,6 @@ export const useMultiLevelSync = (chartRefs, seriesRefs, dataRefs) => {
       });
     });
 
-    // 清理订阅
     return () => {
       subscriptions.forEach(({ chart, timeScale, handler, type }) => {
         if (type === "crosshair" && chart) {
@@ -207,7 +186,7 @@ export const useMultiLevelSync = (chartRefs, seriesRefs, dataRefs) => {
         }
       });
     };
-  }, [chartRefs, seriesRefs, dataRefs, syncCrosshair, syncVisibleRange]);
+  }, [chartsData, syncCrosshair, syncVisibleRange]);
 
   return { findClosestKlineByTime };
 };

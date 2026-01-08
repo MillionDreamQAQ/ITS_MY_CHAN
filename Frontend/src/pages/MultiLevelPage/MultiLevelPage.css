@@ -29,16 +29,20 @@
 }
 
 .chart-section {
-  flex: 1;
-  min-height: 400px;
+  flex: none;
+  min-height: 200px;
   border-bottom: 1px solid var(--border-color);
 }
 
-.chart-section.bottom {
+.chart-section:last-child {
   border-bottom: none;
 }
 
 .chart-section > div {
   width: 100%;
   height: 100%;
+}
+
+.sub-chart-wrapper {
+  flex: 0 !important;
 }

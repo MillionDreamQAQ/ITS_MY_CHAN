@@ -3,34 +3,45 @@ import { Button } from "antd";
 import { SettingOutlined, ArrowLeftOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import ChartContainer from "../../components/ChartContainer";
-import LevelSettingsModal from "./components/LevelSettingsModal";
+import LevelSettingsModal from "../../components/LevelSettingsModal.jsx";
 import {
   useMultiLevelSync,
   useStockSearch,
 } from "../../components/ChartContainer/hooks";
 import { chanApi } from "../../services/api";
 import { useTheme } from "../../contexts/ThemeContext";
+import { MULTI_LEVEL_DEFAULT_CONFIG } from "../../config/config";
 import "./MultiLevelPage.css";
-
-const DEFAULT_LEVELS = {
-  top: "5m",
-  middle: "30m",
-  bottom: "day",
-};
 
 const DEFAULT_STOCK = "sh.000001";
 const DEFAULT_LIMIT = 1000;
+
+const showMessage = (messageApi, key, type, content, duration) => {
+  messageApi[type]({ content, key, duration });
+};
+
+const loadConfig = () => {
+  const saved = localStorage.getItem("multiLevelConfig");
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch (e) {
+      console.error("Failed to parse config:", e);
+    }
+  }
+  return MULTI_LEVEL_DEFAULT_CONFIG;
+};
+
+const saveConfig = (config) => {
+  localStorage.setItem("multiLevelConfig", JSON.stringify(config));
+};
 
 const MultiLevelPage = () => {
   const navigate = useNavigate();
   const { darkMode, toggleDarkMode, messageApi } = useTheme();
 
   const [loading, setLoading] = useState(false);
-
-  const [levels, setLevels] = useState(() => {
-    const saved = localStorage.getItem("multiLevels");
-    return saved ? JSON.parse(saved) : DEFAULT_LEVELS;
-  });
+  const [config, setConfig] = useState(() => loadConfig());
 
   const [favorites, setFavorites] = useState(() => {
     const saved = localStorage.getItem("favorites");
@@ -40,37 +51,11 @@ const MultiLevelPage = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [currentStock, setCurrentStock] = useState(DEFAULT_STOCK);
 
-  const [topData, setTopData] = useState(null);
-  const [middleData, setMiddleData] = useState(null);
-  const [bottomData, setBottomData] = useState(null);
+  const [chartsData, setChartsData] = useState([]);
 
-  const topChartRef = useRef(null);
-  const topSeriesRef = useRef(null);
-  const topDataRef = useRef(null);
-
-  const middleChartRef = useRef(null);
-  const middleSeriesRef = useRef(null);
-  const middleDataRef = useRef(null);
-
-  const bottomChartRef = useRef(null);
-  const bottomSeriesRef = useRef(null);
-  const bottomDataRef = useRef(null);
-
-  const chartRefs = useRef({
-    top: topChartRef,
-    middle: middleChartRef,
-    bottom: bottomChartRef,
-  });
-  const seriesRefs = useRef({
-    top: topSeriesRef,
-    middle: middleSeriesRef,
-    bottom: bottomSeriesRef,
-  });
-  const dataRefs = useRef({
-    top: topDataRef,
-    middle: middleDataRef,
-    bottom: bottomDataRef,
-  });
+  const chartRefs = useRef(new Map());
+  const seriesRefs = useRef(new Map());
+  const dataRefs = useRef(new Map());
 
   const stockSearch = useStockSearch();
 
@@ -78,33 +63,29 @@ const MultiLevelPage = () => {
     localStorage.setItem("favorites", JSON.stringify(favorites));
   }, [favorites]);
 
-  useMultiLevelSync(chartRefs, seriesRefs, dataRefs);
+  useMultiLevelSync(chartRefs, seriesRefs, dataRefs, chartsData);
 
   const loadAllLevels = useCallback(async () => {
     showMessage(messageApi, "query", "info", "正在查询，请稍候...", 0);
     setLoading(true);
     try {
-      const [topResult, middleResult, bottomResult] = await Promise.all([
+      const promises = config.charts.map((chart) =>
         chanApi.calculateChan({
           code: currentStock,
-          kline_type: levels.top,
+          kline_type: chart.klineType,
           limit: DEFAULT_LIMIT,
-        }),
-        chanApi.calculateChan({
-          code: currentStock,
-          kline_type: levels.middle,
-          limit: DEFAULT_LIMIT,
-        }),
-        chanApi.calculateChan({
-          code: currentStock,
-          kline_type: levels.bottom,
-          limit: DEFAULT_LIMIT,
-        }),
-      ]);
+        })
+      );
 
-      setTopData(topResult);
-      setMiddleData(middleResult);
-      setBottomData(bottomResult);
+      const results = await Promise.all(promises);
+
+      const newChartsData = config.charts.map((chart, index) => ({
+        id: chart.id,
+        klineType: chart.klineType,
+        data: results[index],
+      }));
+
+      setChartsData(newChartsData);
       showMessage(messageApi, "loadingData", "success", "数据加载成功！", 2);
     } catch (error) {
       messageApi.error("加载数据失败");
@@ -113,7 +94,7 @@ const MultiLevelPage = () => {
       messageApi.destroy("query");
       setLoading(false);
     }
-  }, [currentStock, levels, messageApi]);
+  }, [currentStock, config, messageApi]);
 
   useEffect(() => {
     loadAllLevels();
@@ -123,10 +104,18 @@ const MultiLevelPage = () => {
     setCurrentStock(code);
   }, []);
 
-  const handleSaveLevels = useCallback((newLevels) => {
-    setLevels(newLevels);
-    localStorage.setItem("multiLevels", JSON.stringify(newLevels));
-  }, []);
+  const handleSaveConfig = useCallback(
+    (newConfig) => {
+      // 手动resize所有图表（解决从大到小时无法正确调整高度的问题）
+      chartRefs.current.forEach((ref) => {
+        ref.resize(ref.chartElement().clientWidth, newConfig.chartHeight);
+      });
+      setConfig(newConfig);
+      saveConfig(newConfig);
+      loadAllLevels();
+    },
+    [loadAllLevels]
+  );
 
   return (
     <>
@@ -150,75 +139,59 @@ const MultiLevelPage = () => {
         </div>
 
         <div className="multi-level-content">
-          <div className="chart-section top">
-            <ChartContainer
-              data={topData}
-              darkMode={darkMode}
-              favorites={favorites}
-              showVolume={false}
-              showSubChart={false}
-              showTitle={true}
-              showControl={false}
-              showKlineInfo={false}
-              stockSearch={stockSearch}
-              chartRefOut={topChartRef}
-              seriesRefOut={topSeriesRef}
-              dataRefOut={topDataRef}
-              currentStock={{
-                code: currentStock,
-                klineType: levels.top,
-                limit: DEFAULT_LIMIT,
-              }}
-              onStockChange={handleStockChange}
-            />
-          </div>
+          {config.charts
+            .sort((a, b) => a.order - b.order)
+            .map((chart, index) => {
+              const chartData = chartsData.find((d) => d.id === chart.id);
 
-          <div className="chart-section middle">
-            <ChartContainer
-              data={middleData}
-              darkMode={darkMode}
-              showVolume={false}
-              showSubChart={false}
-              showTitle={false}
-              showControl={false}
-              showKlineInfo={false}
-              chartRefOut={middleChartRef}
-              seriesRefOut={middleSeriesRef}
-              dataRefOut={middleDataRef}
-              currentStock={{
-                code: currentStock,
-                klineType: levels.middle,
-                limit: DEFAULT_LIMIT,
-              }}
-            />
-          </div>
-
-          <div className="chart-section bottom">
-            <ChartContainer
-              data={bottomData}
-              darkMode={darkMode}
-              showVolume={false}
-              showSubChart={false}
-              showTitle={false}
-              showControl={false}
-              showKlineInfo={false}
-              chartRefOut={bottomChartRef}
-              seriesRefOut={bottomSeriesRef}
-              dataRefOut={bottomDataRef}
-              currentStock={{
-                code: currentStock,
-                klineType: levels.bottom,
-                limit: DEFAULT_LIMIT,
-              }}
-            />
-          </div>
+              return (
+                <div
+                  key={chart.id}
+                  className="chart-section"
+                  style={{ height: `${config.chartHeight}px` }}
+                >
+                  <ChartContainer
+                    data={chartData?.data}
+                    darkMode={darkMode}
+                    favorites={favorites}
+                    showVolume={false}
+                    showSubChart={false}
+                    showTitle={index === 0}
+                    showControl={true}
+                    canEditLevel={false}
+                    canEditLength={false}
+                    showKlineInfo={false}
+                    isAutoSize={false}
+                    stockSearch={stockSearch}
+                    chartRefOut={(ref) => {
+                      if (ref) chartRefs.current.set(chart.id, ref);
+                      else chartRefs.current.delete(chart.id);
+                    }}
+                    seriesRefOut={(ref) => {
+                      if (ref) seriesRefs.current.set(chart.id, ref);
+                      else seriesRefs.current.delete(chart.id);
+                    }}
+                    dataRefOut={(ref) => {
+                      if (ref) dataRefs.current.set(chart.id, ref);
+                      else dataRefs.current.delete(chart.id);
+                    }}
+                    currentStock={{
+                      code: currentStock,
+                      klineType: chart.klineType,
+                      limit: DEFAULT_LIMIT,
+                    }}
+                    onStockChange={index === 0 ? handleStockChange : undefined}
+                  />
+                </div>
+              );
+            })}
         </div>
 
         <LevelSettingsModal
           open={settingsOpen}
           onClose={() => setSettingsOpen(false)}
-          levels={levels}
-          onSave={handleSaveLevels}
+          config={config}
+          onSave={handleSaveConfig}
         />
       </div>
     </>

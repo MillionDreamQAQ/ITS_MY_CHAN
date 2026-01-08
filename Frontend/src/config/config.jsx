@@ -78,7 +78,6 @@ export const getColors = (isDarkMode = false) => {
     })[5];
   });
 
-  // 均线颜色
   Object.entries(MA_COLORS).forEach(([period, color]) => {
     darkColors[period] = generate(color, {
       theme: "dark",
@@ -186,3 +185,11 @@ export const getChartConfig = (
   },
   autoSize: isAutoSize,
 });
+
+export const MULTI_LEVEL_DEFAULT_CONFIG = {
+  chartHeight: 400,
+  charts: [
+    { id: "chart-0", klineType: "30m", order: 0 },
+    { id: "chart-1", klineType: "day", order: 1 },
+  ],
+};

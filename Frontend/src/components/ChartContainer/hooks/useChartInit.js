@@ -13,7 +13,8 @@ export const useChartInit = (
   dataRefs,
   COLORS,
   setKlineInfo,
-  setLoading
+  setLoading,
+  isAutoSize = true
 ) => {
   const isInitializedRef = useRef(false);
 
@@ -35,7 +36,8 @@ export const useChartInit = (
         containerWidth,
         containerRefs.current.main.clientHeight || CHART_SIZES.mainHeight,
         true,
-        false
+        false,
+        isAutoSize
       )
     );
     chartRefs.current.main = mainChart;
@@ -47,7 +49,8 @@ export const useChartInit = (
         containerWidth,
         containerRefs.current.sub.clientHeight || CHART_SIZES.subHeight,
         false,
-        false
+        false,
+        isAutoSize
       )
     );
     chartRefs.current.sub = subChart;

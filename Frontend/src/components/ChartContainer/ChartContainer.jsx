@@ -42,10 +42,12 @@ const ChartContainer = ({
   canSearch = true,
   showTitle = true,
   canEditLevel = true,
+  canEditLength = true,
   showControl = true,
   showKlineInfo = true,
   showVolume = true,
   showSubChart = true,
+  isAutoSize = true,
   chartRefOut,
   seriesRefOut,
   dataRefOut,
@@ -62,23 +64,19 @@ const ChartContainer = ({
   const [klineInfo, setKlineInfo] = useState(null);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
 
-  // 股票名称
   const stockName = useMemo(() => {
     if (data?.name) return data.name;
     return stockSearch.getStockName?.(currentStock.code) || "";
   }, [data?.name, stockSearch, currentStock.code]);
 
-  // Ctrl+F 快捷键监听
   useEffect(() => {
     if (!canSearch || !showTitle) return;
-
     const handleKeyDown = (e) => {
       if (e.ctrlKey && e.key === "f") {
         e.preventDefault();
         setSearchModalOpen(true);
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [canSearch, showTitle]);
@@ -129,21 +127,22 @@ const ChartContainer = ({
     dataRefs,
     COLORS,
     setKlineInfo,
-    setLoading
+    setLoading,
+    isAutoSize
   );
 
   // 暴露图表实例给父组件-多级别联动
   useEffect(() => {
-    if (chartRefOut && chartRefs.current.main) {
-      chartRefOut.current = chartRefs.current.main;
+    if (chartRefOut) {
+      chartRefOut(chartRefs.current.main);
     }
     if (seriesRefOut) {
-      seriesRefOut.current = seriesRefs.current;
+      seriesRefOut(seriesRefs.current);
     }
     if (dataRefOut) {
-      dataRefOut.current = dataRefs.current.kline;
+      dataRefOut(dataRefs.current.kline);
     }
-  }, [chartRefOut, seriesRefOut, dataRefOut]);
+  }, [chartRefOut, seriesRefOut, dataRefOut, data]);
 
   // 图表同步
   useChartSync(
@@ -330,7 +329,7 @@ const ChartContainer = ({
     dataRefs.current.kline = klineData;
 
     if (dataRefOut) {
-      dataRefOut.current = klineData;
+      dataRefOut(klineData);
     }
 
     seriesRefs.current.candlestick.setData(klineData);
@@ -683,6 +682,7 @@ const ChartContainer = ({
               onRefresh={onRefresh}
               darkMode={darkMode}
               canEditLevel={canEditLevel}
+              canEditLength={canEditLength}
             />
           )}
           {showKlineInfo && <KlineInfoPanel klineInfo={klineInfo} />}
