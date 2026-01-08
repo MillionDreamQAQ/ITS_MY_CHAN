@@ -558,6 +558,7 @@ const ChartContainer = ({
         containerRefs.current.sub.style.display = showSubChart
           ? "flex"
           : "none";
+        containerRefs.current.sub.style.flex = showSubChart ? "1 1 0" : "0 0 0";
       }
     }
 
@@ -617,6 +618,7 @@ const ChartContainer = ({
   useEffect(() => {
     if (containerRefs.current.sub) {
       containerRefs.current.sub.style.display = showSubChart ? "flex" : "none";
+      containerRefs.current.sub.style.flex = showSubChart ? "1 1 0" : "0 0 0";
 
       if (!showSubChart && chartRefs.current.sub) {
         chartRefs.current.sub.clearCrosshairPosition();

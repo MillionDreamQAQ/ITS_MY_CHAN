@@ -3,7 +3,7 @@ import { Button } from "antd";
 import { SettingOutlined, ArrowLeftOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import ChartContainer from "../../components/ChartContainer";
-import LevelSettingsModal from "../../components/LevelSettingsModal.jsx";
+import LevelSettingsModal from "../../components/LevelSettingsModal";
 import {
   useMultiLevelSync,
   useStockSearch,
@@ -104,6 +104,16 @@ const MultiLevelPage = () => {
     setCurrentStock(code);
   }, []);
 
+  const handleToggleFavorite = useCallback((code) => {
+    setFavorites((prev) => {
+      const newFavorites = prev.includes(code)
+        ? prev.filter((c) => c !== code)
+        : [...prev, code];
+      localStorage.setItem("favorites", JSON.stringify(newFavorites));
+      return newFavorites;
+    });
+  }, []);
+
   const handleSaveConfig = useCallback(
     (newConfig) => {
       // 手动resize所有图表（解决从大到小时无法正确调整高度的问题）
@@ -180,6 +190,7 @@ const MultiLevelPage = () => {
                       klineType: chart.klineType,
                       limit: DEFAULT_LIMIT,
                     }}
+                    onToggleFavorite={handleToggleFavorite}
                     onStockChange={index === 0 ? handleStockChange : undefined}
                   />
                 </div>
