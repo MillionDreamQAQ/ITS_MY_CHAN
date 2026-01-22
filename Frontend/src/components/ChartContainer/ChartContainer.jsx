@@ -552,18 +552,10 @@ const ChartContainer = ({
           );
         }
       }
-
-      // 恢复MACD显示状态
-      if (containerRefs.current.sub) {
-        containerRefs.current.sub.style.display = showSubChart
-          ? "flex"
-          : "none";
-        containerRefs.current.sub.style.flex = showSubChart ? "1 1 0" : "0 0 0";
-      }
     }
 
     setLoading(false);
-  }, [data, klineData, resetMeasure, showSubChart]);
+  }, [data, klineData, resetMeasure]);
 
   // 指标可见性控制 - 合并为单个 useEffect
   useEffect(() => {
@@ -617,9 +609,6 @@ const ChartContainer = ({
   // MACD副图可见性控制
   useEffect(() => {
     if (containerRefs.current.sub) {
-      containerRefs.current.sub.style.display = showSubChart ? "flex" : "none";
-      containerRefs.current.sub.style.flex = showSubChart ? "1 1 0" : "0 0 0";
-
       if (!showSubChart && chartRefs.current.sub) {
         chartRefs.current.sub.clearCrosshairPosition();
       }
@@ -711,6 +700,7 @@ const ChartContainer = ({
         <div
           className="sub-chart-wrapper"
           ref={(el) => (containerRefs.current.sub = el)}
+          style={{ display: showSubChart ? "flex" : "none" }}
         />
         {canSearch && showTitle && (
           <StockSearchModal
