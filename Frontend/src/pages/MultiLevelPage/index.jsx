@@ -10,7 +10,7 @@ import {
 } from "../../components/ChartContainer/hooks";
 import { chanApi } from "../../services/api";
 import { useTheme } from "../../contexts/ThemeContext";
-import { MULTI_LEVEL_DEFAULT_CONFIG } from "../../config/config";
+import { MULTI_LEVEL_DEFAULT_CONFIG, getDefaultIndicators } from "../../config/config";
 import "./MultiLevelPage.css";
 
 const DEFAULT_STOCK = "sh.000001";
@@ -163,6 +163,7 @@ const MultiLevelPage = () => {
                   <ChartContainer
                     data={chartData?.data}
                     darkMode={darkMode}
+                    indicators={getDefaultIndicators()}
                     favorites={favorites}
                     showVolume={false}
                     showSubChart={false}
