@@ -13,6 +13,7 @@ class ChanRequest(BaseModel):
         description="K线级别，day=日线，week=周线，month=月线, 1m=1分钟线, 5m=5分钟线, 15m=15分钟线, 30m=30分钟线, 60m=60分钟线",
     )
     limit: Optional[int] = Field(2000, description="返回K线数据条数，默认2000条")
+    replay_date: Optional[str] = Field(None, description="回放模式截止日期，格式 YYYY-MM-DD。设置后只加载该日期及之前的数据")
 
 
 class KLineData(BaseModel):

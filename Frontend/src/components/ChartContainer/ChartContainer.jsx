@@ -54,6 +54,7 @@ const ChartContainer = ({
   onStockChange,
   onKlineTypeChange,
   onLimitChange,
+  onReplayDateChange,
   onRefresh,
   onToggleFavorite,
   onSetMAType,
@@ -668,8 +669,10 @@ const ChartContainer = ({
             <ChartControlPanel
               klineType={currentStock.klineType}
               limit={currentStock.limit}
+              replayDate={currentStock.replayDate}
               onKlineTypeChange={onKlineTypeChange}
               onLimitChange={onLimitChange}
+              onReplayDateChange={onReplayDateChange}
               onRefresh={onRefresh}
               darkMode={darkMode}
               canEditLevel={canEditLevel}

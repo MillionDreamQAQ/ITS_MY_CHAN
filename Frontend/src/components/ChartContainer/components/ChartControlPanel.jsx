@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { Button, InputNumber, Space } from "antd";
-import { ReloadOutlined } from "@ant-design/icons";
+import { Button, DatePicker, InputNumber, Space } from "antd";
+import { ReloadOutlined, FieldTimeOutlined } from "@ant-design/icons";
+import dayjs from "dayjs";
 import "./ChartControlPanel.css";
 
 const KLINE_GROUPS = [
@@ -21,8 +22,10 @@ const KLINE_GROUPS = [
 const ChartControlPanel = ({
   klineType,
   limit,
+  replayDate,
   onKlineTypeChange,
   onLimitChange,
+  onReplayDateChange,
   onRefresh,
   darkMode,
   canEditLevel = true,
@@ -86,6 +89,26 @@ const ChartControlPanel = ({
           className="refresh-button"
           title="刷新数据"
           size="medium"
+        />
+      )}
+      {canEditLength && (
+        <Button
+          type={replayDate ? "primary" : "default"}
+          icon={<FieldTimeOutlined />}
+          onClick={() => onReplayDateChange?.(replayDate ? null : dayjs().subtract(1, "day").format("YYYY-MM-DD"))}
+          className="replay-toggle-button"
+          title={replayDate ? "关闭回放模式" : "开启回放模式"}
+          size="medium"
+        />
+      )}
+      {replayDate && (
+        <DatePicker
+          value={dayjs(replayDate)}
+          onChange={(date) => onReplayDateChange?.(date ? date.format("YYYY-MM-DD") : null)}
+          placeholder="选择回放日期"
+          size="medium"
+          className="replay-date-picker"
+          allowClear={false}
         />
       )}
     </div>

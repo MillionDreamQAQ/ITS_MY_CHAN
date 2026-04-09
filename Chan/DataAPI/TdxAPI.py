@@ -114,6 +114,16 @@ class CTdxStockAPI(CCommonStockApi):
 
             # 转换数据格式并返回
             for kline_item in kline_list:
+                # 回放模式：如果设置了 end_date，跳过超过截止日期的数据
+                if self.end_date:
+                    time_str = kline_item["Time"]
+                    if "+" in time_str:
+                        time_str = time_str.split("+")[0]
+                    elif time_str.endswith("Z"):
+                        time_str = time_str[:-1]
+                    kline_date = datetime.fromisoformat(time_str).strftime("%Y-%m-%d")
+                    if kline_date > self.end_date:
+                        break
                 yield self._convert_to_kline_unit(kline_item)
 
         except requests.RequestException as e:

@@ -56,3 +56,14 @@
   justify-content: center;
   padding: 0;
 }
+
+.chart-control-panel .replay-toggle-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.chart-control-panel .replay-date-picker {
+  width: 130px;
+}

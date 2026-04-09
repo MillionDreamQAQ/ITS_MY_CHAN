@@ -90,7 +90,7 @@ class ChanService:
         chan = CChan(
             code=request.code,
             begin_time=None,
-            end_time=None,
+            end_time=request.replay_date,
             data_src=DATA_SRC.TDX,
             lv_list=[kl_type],
             config=config,

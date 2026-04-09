@@ -19,6 +19,7 @@ function ChartPage() {
     code: "sh.000001",
     klineType: "day",
     limit: 2000,
+    replayDate: null,
   });
 
   const stockSearch = useStockSearch();
@@ -108,6 +109,10 @@ function ChartPage() {
     }
   }, []);
 
+  const handleReplayDateChange = useCallback((dateStr) => {
+    setCurrentStock((prev) => ({ ...prev, replayDate: dateStr }));
+  }, []);
+
   const handleQuery = async (request) => {
     showMessage(messageApi, "query", "info", "正在查询，请稍候...", 0);
     setLoading(true);
@@ -132,6 +137,7 @@ function ChartPage() {
       code: currentStock.code,
       kline_type: currentStock.klineType,
       limit: currentStock.limit,
+      replay_date: currentStock.replayDate || undefined,
     });
   }, [currentStock]);
 
@@ -141,9 +147,10 @@ function ChartPage() {
         code: currentStock.code,
         kline_type: currentStock.klineType,
         limit: currentStock.limit,
+        replay_date: currentStock.replayDate || undefined,
       });
     }
-  }, [currentStock.code, currentStock.klineType, currentStock.limit]);
+  }, [currentStock.code, currentStock.klineType, currentStock.limit, currentStock.replayDate]);
 
   return (
     <>
@@ -159,6 +166,7 @@ function ChartPage() {
           onStockChange={handleStockChange}
           onKlineTypeChange={handleKlineTypeChange}
           onLimitChange={handleLimitChange}
+          onReplayDateChange={handleReplayDateChange}
           onRefresh={handleRefresh}
           onToggleFavorite={toggleFavorite}
           onSetMAType={setMAType}

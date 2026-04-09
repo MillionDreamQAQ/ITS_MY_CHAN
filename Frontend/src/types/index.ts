@@ -55,8 +55,8 @@ export interface ChanResponse {
 export interface ChanRequest {
   code: string;
   kline_type?: string;
-  begin_time: string;
-  end_time?: string;
+  limit?: number;
+  replay_date?: string;
 }
 
 export interface ScanRequest {
