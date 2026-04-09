@@ -32,11 +32,18 @@ const ChartControlPanel = ({
   canEditLength = true,
 }) => {
   const [localLimit, setLocalLimit] = useState(limit);
+  const [localReplayDate, setLocalReplayDate] = useState(
+    replayDate ? dayjs(replayDate) : null
+  );
   const timerRef = useRef(null);
 
   useEffect(() => {
     setLocalLimit(limit);
   }, [limit]);
+
+  useEffect(() => {
+    setLocalReplayDate(replayDate ? dayjs(replayDate) : null);
+  }, [replayDate]);
 
   const handleLocalLimitChange = (value) => {
     setLocalLimit(value);
@@ -47,6 +54,13 @@ const ChartControlPanel = ({
       timerRef.current = setTimeout(() => {
         onLimitChange(value);
       }, 1000);
+    }
+  };
+
+  const handleReplayDateChange = (date) => {
+    setLocalReplayDate(date);
+    if (date) {
+      onReplayDateChange?.(date.format("YYYY-MM-DD HH:mm"));
     }
   };
 
@@ -95,7 +109,7 @@ const ChartControlPanel = ({
         <Button
           type={replayDate ? "primary" : "default"}
           icon={<FieldTimeOutlined />}
-          onClick={() => onReplayDateChange?.(replayDate ? null : dayjs().subtract(1, "day").format("YYYY-MM-DD"))}
+          onClick={() => onReplayDateChange?.(replayDate ? null : dayjs().subtract(1, "day").format("YYYY-MM-DD HH:mm"))}
           className="replay-toggle-button"
           title={replayDate ? "关闭回放模式" : "开启回放模式"}
           size="medium"
@@ -103,9 +117,10 @@ const ChartControlPanel = ({
       )}
       {replayDate && (
         <DatePicker
-          value={dayjs(replayDate)}
-          onChange={(date) => onReplayDateChange?.(date ? date.format("YYYY-MM-DD") : null)}
-          placeholder="选择回放日期"
+          showTime
+          value={localReplayDate}
+          onChange={handleReplayDateChange}
+          placeholder="选择回放时间"
           size="medium"
           className="replay-date-picker"
           allowClear={false}

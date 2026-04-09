@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { ConfigProvider, message, theme } from "antd";
+import zhCN from "antd/locale/zh_CN";
+import "dayjs/locale/zh-cn";
 import { Outlet } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import "./App.css";
@@ -33,7 +35,7 @@ function App() {
   };
 
   return (
-    <ConfigProvider theme={themeConfig}>
+    <ConfigProvider theme={themeConfig} locale={zhCN}>
       <ThemeProvider
         darkMode={darkMode}
         toggleDarkMode={toggleDarkMode}
