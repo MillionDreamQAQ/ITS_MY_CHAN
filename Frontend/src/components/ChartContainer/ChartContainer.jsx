@@ -5,11 +5,13 @@ import {
   createSeriesMarkers,
 } from "lightweight-charts";
 import "./ChartContainer.css";
+import dayjs from "dayjs";
 import {
   getBsPointData,
   calculateMACD,
   calculateMovingAverage,
   convertToUnixTimestamp,
+  TIME_CONVERSION,
   MACD_CONFIG,
 } from "../../utils/utils";
 import {
@@ -55,6 +57,7 @@ const ChartContainer = ({
   onKlineTypeChange,
   onLimitChange,
   onReplayDateChange,
+  onReplayActiveChange,
   onRefresh,
   onToggleFavorite,
   onSetMAType,
@@ -161,13 +164,51 @@ const ChartContainer = ({
     resetMeasure,
   } = useMeasure({ current: chartRefs.current.main }, seriesRefs, dataRefs);
 
+  // 回放模式：点击图表设定截止时间（仅在回放激活时生效）
+  useEffect(() => {
+    const chart = chartRefs.current.main;
+    if (!chart) return;
+
+    const handleClick = (param) => {
+      if (!param.time) return;
+      if (!currentStock.replayActive) return;
+      // 忽略 Shift+点击（测量工具）
+      if (shiftKeyRef.current) return;
+
+      let dateStr;
+      if (typeof param.time === "object") {
+        // BusinessDay: {year, month, day}
+        const { year, month, day } = param.time;
+        dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")} 15:00`;
+      } else {
+        // unix timestamp，减去 8 小时偏移
+        dateStr = dayjs
+          .unix(param.time)
+          .subtract(TIME_CONVERSION.hourOffset, "hour")
+          .format("YYYY-MM-DD HH:mm");
+      }
+      onReplayDateChange?.(dateStr);
+    };
+
+    chart.subscribeClick(handleClick);
+    return () => {
+      if (chartRefs.current.main) {
+        chartRefs.current.main.unsubscribeClick(handleClick);
+      }
+    };
+  }, [currentStock.replayActive, onReplayDateChange]);
+
   // 更新光标样式
   useEffect(() => {
     const updateCursor = () => {
       if (containerRefs.current.main) {
-        containerRefs.current.main.style.cursor = shiftKeyRef.current
-          ? "crosshair"
-          : "default";
+        if (shiftKeyRef.current) {
+          containerRefs.current.main.style.cursor = "crosshair";
+        } else if (currentStock.replayActive) {
+          containerRefs.current.main.style.cursor = "pointer";
+        } else {
+          containerRefs.current.main.style.cursor = "default";
+        }
       }
     };
 
@@ -180,12 +221,13 @@ const ChartContainer = ({
 
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
+    updateCursor();
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [shiftKeyRef]);
+  }, [shiftKeyRef, currentStock.replayActive]);
 
   // 辅助函数：添加线段系列
   const addLineSegments = (
@@ -669,10 +711,12 @@ const ChartContainer = ({
             <ChartControlPanel
               klineType={currentStock.klineType}
               limit={currentStock.limit}
+              replayActive={currentStock.replayActive}
               replayDate={currentStock.replayDate}
               onKlineTypeChange={onKlineTypeChange}
               onLimitChange={onLimitChange}
               onReplayDateChange={onReplayDateChange}
+              onReplayActiveChange={onReplayActiveChange}
               onRefresh={onRefresh}
               darkMode={darkMode}
               canEditLevel={canEditLevel}

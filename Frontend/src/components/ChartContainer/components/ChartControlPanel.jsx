@@ -22,10 +22,12 @@ const KLINE_GROUPS = [
 const ChartControlPanel = ({
   klineType,
   limit,
+  replayActive,
   replayDate,
   onKlineTypeChange,
   onLimitChange,
   onReplayDateChange,
+  onReplayActiveChange,
   onRefresh,
   darkMode,
   canEditLevel = true,
@@ -62,6 +64,15 @@ const ChartControlPanel = ({
     setLocalReplayDate(date);
     if (date) {
       onReplayDateChange?.(date.format("YYYY-MM-DD HH:mm"));
+    }
+  };
+
+  const handleToggleReplay = () => {
+    if (replayActive) {
+      onReplayActiveChange?.(false);
+      onReplayDateChange?.(null);
+    } else {
+      onReplayActiveChange?.(true);
     }
   };
 
@@ -109,45 +120,37 @@ const ChartControlPanel = ({
       {canEditLength && (
         <Popover
           open={popoverOpen}
-          onOpenChange={(open) => {
-            setPopoverOpen(open);
-            if (open && !replayDate) {
-              const defaultDate = dayjs().subtract(1, "day");
-              setLocalReplayDate(defaultDate);
-            }
-          }}
+          onOpenChange={setPopoverOpen}
           trigger="click"
           placement="bottomRight"
           content={
             <div className="replay-popover-content">
-              <DatePicker
-                showTime
-                value={localReplayDate}
-                onChange={handleReplayDateChange}
-                placeholder="选择回放时间"
-                size="medium"
-                allowClear={false}
-              />
-              {replayDate && (
-                <Button
+              {replayActive && replayDate && (
+                <DatePicker
+                  showTime
+                  value={localReplayDate}
+                  onChange={handleReplayDateChange}
+                  placeholder="微调回放时间"
                   size="medium"
-                  danger
-                  onClick={() => {
-                    onReplayDateChange?.(null);
-                    setPopoverOpen(false);
-                  }}
-                >
-                  关闭回放
-                </Button>
+                  allowClear={false}
+                />
               )}
+              <Button
+                size="medium"
+                danger={replayActive}
+                type={replayActive ? "default" : "primary"}
+                onClick={handleToggleReplay}
+              >
+                {replayActive ? "关闭回放" : "开启回放"}
+              </Button>
             </div>
           }
         >
           <Button
-            type={replayDate ? "primary" : "default"}
+            type={replayActive ? "primary" : "default"}
             icon={<FieldTimeOutlined />}
             className="replay-toggle-button"
-            title={replayDate ? "回放模式中" : "回放模式"}
+            title={replayActive ? "回放模式中" : "回放模式"}
             size="medium"
           />
         </Popover>

@@ -19,6 +19,7 @@ function ChartPage() {
     code: "sh.000001",
     klineType: "day",
     limit: 2000,
+    replayActive: false,
     replayDate: null,
   });
 
@@ -113,6 +114,14 @@ function ChartPage() {
     setCurrentStock((prev) => ({ ...prev, replayDate: dateStr }));
   }, []);
 
+  const handleReplayActiveChange = useCallback((active) => {
+    setCurrentStock((prev) => ({
+      ...prev,
+      replayActive: active,
+      replayDate: active ? prev.replayDate : null,
+    }));
+  }, []);
+
   const handleQuery = async (request) => {
     showMessage(messageApi, "query", "info", "正在查询，请稍候...", 0);
     setLoading(true);
@@ -167,6 +176,7 @@ function ChartPage() {
           onKlineTypeChange={handleKlineTypeChange}
           onLimitChange={handleLimitChange}
           onReplayDateChange={handleReplayDateChange}
+          onReplayActiveChange={handleReplayActiveChange}
           onRefresh={handleRefresh}
           onToggleFavorite={toggleFavorite}
           onSetMAType={setMAType}
