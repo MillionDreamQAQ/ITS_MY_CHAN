@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Button, DatePicker, InputNumber, Space } from "antd";
+import { Button, DatePicker, InputNumber, Popover, Space } from "antd";
 import { ReloadOutlined, FieldTimeOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import "./ChartControlPanel.css";
@@ -35,6 +35,7 @@ const ChartControlPanel = ({
   const [localReplayDate, setLocalReplayDate] = useState(
     replayDate ? dayjs(replayDate) : null
   );
+  const [popoverOpen, setPopoverOpen] = useState(false);
   const timerRef = useRef(null);
 
   useEffect(() => {
@@ -106,25 +107,50 @@ const ChartControlPanel = ({
         />
       )}
       {canEditLength && (
-        <Button
-          type={replayDate ? "primary" : "default"}
-          icon={<FieldTimeOutlined />}
-          onClick={() => onReplayDateChange?.(replayDate ? null : dayjs().subtract(1, "day").format("YYYY-MM-DD HH:mm"))}
-          className="replay-toggle-button"
-          title={replayDate ? "关闭回放模式" : "开启回放模式"}
-          size="medium"
-        />
-      )}
-      {replayDate && (
-        <DatePicker
-          showTime
-          value={localReplayDate}
-          onChange={handleReplayDateChange}
-          placeholder="选择回放时间"
-          size="medium"
-          className="replay-date-picker"
-          allowClear={false}
-        />
+        <Popover
+          open={popoverOpen}
+          onOpenChange={(open) => {
+            setPopoverOpen(open);
+            if (open && !replayDate) {
+              const defaultDate = dayjs().subtract(1, "day");
+              setLocalReplayDate(defaultDate);
+            }
+          }}
+          trigger="click"
+          placement="bottomRight"
+          content={
+            <div className="replay-popover-content">
+              <DatePicker
+                showTime
+                value={localReplayDate}
+                onChange={handleReplayDateChange}
+                placeholder="选择回放时间"
+                size="medium"
+                allowClear={false}
+              />
+              {replayDate && (
+                <Button
+                  size="medium"
+                  danger
+                  onClick={() => {
+                    onReplayDateChange?.(null);
+                    setPopoverOpen(false);
+                  }}
+                >
+                  关闭回放
+                </Button>
+              )}
+            </div>
+          }
+        >
+          <Button
+            type={replayDate ? "primary" : "default"}
+            icon={<FieldTimeOutlined />}
+            className="replay-toggle-button"
+            title={replayDate ? "回放模式中" : "回放模式"}
+            size="medium"
+          />
+        </Popover>
       )}
     </div>
   );
