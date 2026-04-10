@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo, memo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback, memo } from "react";
 import {
   LineSeries,
   HistogramSeries,
@@ -88,11 +88,11 @@ const ChartContainer = ({
   const COLORS = useMemo(() => getColors(darkMode), [darkMode]);
   const LINE_SERIES_CONFIGS = useMemo(
     () => getLineSeriesConfigs(darkMode),
-    [darkMode]
+    [darkMode],
   );
   const MA_SERIES_CONFIGS = useMemo(
     () => generateMASeriesConfigs(MOVING_AVERAGE_PERIODS, MA_COLORS, darkMode),
-    [darkMode]
+    [darkMode],
   );
 
   const containerRefs = useRef({
@@ -132,7 +132,7 @@ const ChartContainer = ({
     COLORS,
     setKlineInfo,
     setLoading,
-    isAutoSize
+    isAutoSize,
   );
 
   // 暴露图表实例给父组件-多级别联动
@@ -152,7 +152,7 @@ const ChartContainer = ({
   useChartSync(
     { current: chartRefs.current.main },
     { current: chartRefs.current.sub },
-    seriesRefs
+    seriesRefs,
   );
 
   // 测量功能
@@ -229,13 +229,42 @@ const ChartContainer = ({
     };
   }, [shiftKeyRef, currentStock.replayActive]);
 
+  const shiftReplay = useCallback(
+    (offset) => {
+      const base = currentStock.replayDate
+        ? dayjs(currentStock.replayDate)
+        : dayjs();
+
+      // 根据K线类型决定偏移单位
+      const unitMap = {
+        "1m": "minute",
+        "5m": "minute",
+        "15m": "minute",
+        "30m": "minute",
+        "60m": "hour",
+        day: "day",
+        week: "week",
+        month: "month",
+      };
+      const stepMap = { "5m": 5, "15m": 15, "30m": 30, "60m": 60 };
+      const klineType = currentStock.klineType || "day";
+      const unit = unitMap[klineType] || "day";
+      const step = stepMap[klineType] || 1;
+      const totalOffset = offset * step;
+
+      const newDate = base.add(totalOffset, unit);
+      onReplayDateChange?.(newDate.format("YYYY-MM-DD HH:mm"));
+    },
+    [currentStock.replayDate, currentStock.klineType, onReplayDateChange],
+  );
+
   // 辅助函数：添加线段系列
   const addLineSegments = (
     chart,
     dataList,
     config,
     convertTime,
-    getDataPoints
+    getDataPoints,
   ) => {
     const seriesList = [];
     if (dataList && dataList.length > 0) {
@@ -347,7 +376,7 @@ const ChartContainer = ({
       }
       seriesRefs.current.markers = createSeriesMarkers(
         seriesRefs.current.candlestick,
-        updatedMarkers
+        updatedMarkers,
       );
       if (seriesRefs.current.markers && indicators.bsPoints) {
         seriesRefs.current.markers._private__attach();
@@ -406,13 +435,13 @@ const ChartContainer = ({
 
     // 清除旧系列
     seriesRefs.current.bi.forEach((s) =>
-      chartRefs.current.main.removeSeries(s)
+      chartRefs.current.main.removeSeries(s),
     );
     seriesRefs.current.seg.forEach((s) =>
-      chartRefs.current.main.removeSeries(s)
+      chartRefs.current.main.removeSeries(s),
     );
     seriesRefs.current.zs.forEach((s) =>
-      chartRefs.current.main.removeSeries(s)
+      chartRefs.current.main.removeSeries(s),
     );
     Object.values(seriesRefs.current.ma).forEach((s) => {
       if (s) chartRefs.current.main.removeSeries(s);
@@ -437,7 +466,7 @@ const ChartContainer = ({
         (bi, convertTime) => [
           { time: convertTime(bi.begin_time), value: bi.begin_value },
           { time: convertTime(bi.end_time), value: bi.end_value },
-        ]
+        ],
       );
     }
 
@@ -451,7 +480,7 @@ const ChartContainer = ({
         (seg, convertTime) => [
           { time: convertTime(seg.begin_time), value: seg.begin_value },
           { time: convertTime(seg.end_time), value: seg.end_value },
-        ]
+        ],
       );
     }
 
@@ -467,7 +496,7 @@ const ChartContainer = ({
           (item, convertTime) => [
             { time: convertTime(item.begin_time), value: item.high },
             { time: convertTime(item.end_time), value: item.high },
-          ]
+          ],
         );
         const zsBottomSeries = addLineSegments(
           chartRefs.current.main,
@@ -477,7 +506,7 @@ const ChartContainer = ({
           (item, convertTime) => [
             { time: convertTime(item.begin_time), value: item.low },
             { time: convertTime(item.end_time), value: item.low },
-          ]
+          ],
         );
         zsSeries.push(...zsTopSeries, ...zsBottomSeries);
       });
@@ -525,7 +554,7 @@ const ChartContainer = ({
 
       seriesRefs.current.markers = createSeriesMarkers(
         seriesRefs.current.candlestick,
-        bsMarkers
+        bsMarkers,
       );
       if (seriesRefs.current.markers) {
         seriesRefs.current.markers.applyOptions({
@@ -560,26 +589,26 @@ const ChartContainer = ({
               },
               priceLineVisible: false,
               lastValueVisible: true,
-            }
+            },
           );
           seriesRefs.current.histogram = macdHistogramSeries;
           macdHistogramSeries.setData(macdData.histogram);
 
           const difLineSeries = chartRefs.current.sub.addSeries(
             LineSeries,
-            LINE_SERIES_CONFIGS.dif
+            LINE_SERIES_CONFIGS.dif,
           );
           difLineSeries.setData(macdData.dif);
 
           const deaLineSeries = chartRefs.current.sub.addSeries(
             LineSeries,
-            LINE_SERIES_CONFIGS.dea
+            LINE_SERIES_CONFIGS.dea,
           );
           deaLineSeries.setData(macdData.dea);
 
           const zeroLineSeries = chartRefs.current.sub.addSeries(
             LineSeries,
-            LINE_SERIES_CONFIGS.zero
+            LINE_SERIES_CONFIGS.zero,
           );
           const zeroLineData = macdData.dif.map((item) => ({
             time: item.time,
@@ -591,7 +620,7 @@ const ChartContainer = ({
             macdHistogramSeries,
             difLineSeries,
             deaLineSeries,
-            zeroLineSeries
+            zeroLineSeries,
           );
         }
       }
@@ -717,6 +746,7 @@ const ChartContainer = ({
               onLimitChange={onLimitChange}
               onReplayDateChange={onReplayDateChange}
               onReplayActiveChange={onReplayActiveChange}
+              onShiftReplay={shiftReplay}
               onRefresh={onRefresh}
               darkMode={darkMode}
               canEditLevel={canEditLevel}

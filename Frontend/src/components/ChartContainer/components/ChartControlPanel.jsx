@@ -28,6 +28,7 @@ const ChartControlPanel = ({
   onLimitChange,
   onReplayDateChange,
   onReplayActiveChange,
+  onShiftReplay,
   onRefresh,
   darkMode,
   canEditLevel = true,
@@ -35,7 +36,7 @@ const ChartControlPanel = ({
 }) => {
   const [localLimit, setLocalLimit] = useState(limit);
   const [localReplayDate, setLocalReplayDate] = useState(
-    replayDate ? dayjs(replayDate) : null
+    replayDate ? dayjs(replayDate) : null,
   );
   const [popoverOpen, setPopoverOpen] = useState(false);
   const timerRef = useRef(null);
@@ -71,6 +72,7 @@ const ChartControlPanel = ({
     if (replayActive) {
       onReplayActiveChange?.(false);
       onReplayDateChange?.(null);
+      setPopoverOpen(false);
     } else {
       onReplayActiveChange?.(true);
     }
@@ -120,20 +122,40 @@ const ChartControlPanel = ({
       {canEditLength && (
         <Popover
           open={popoverOpen}
-          onOpenChange={setPopoverOpen}
+          onOpenChange={(open) => {
+            // 回放激活时不允许外部点击关闭
+            if (replayActive && !open) return;
+            setPopoverOpen(open);
+          }}
           trigger="click"
           placement="bottomRight"
           content={
             <div className="replay-popover-content">
-              {replayActive && replayDate && (
-                <DatePicker
-                  showTime
-                  value={localReplayDate}
-                  onChange={handleReplayDateChange}
-                  placeholder="微调回放时间"
-                  size="medium"
-                  allowClear={false}
-                />
+              {replayActive && (
+                <>
+                  <DatePicker
+                    showTime
+                    value={localReplayDate}
+                    onChange={handleReplayDateChange}
+                    placeholder="选择回放时间"
+                    size="medium"
+                    allowClear={false}
+                  />
+                  <Space.Compact>
+                    <Button size="medium" onClick={() => onShiftReplay?.(-10)}>
+                      ← 10根
+                    </Button>
+                    <Button size="medium" onClick={() => onShiftReplay?.(-1)}>
+                      ← 1根
+                    </Button>
+                    <Button size="medium" onClick={() => onShiftReplay?.(1)}>
+                      1根 →
+                    </Button>
+                    <Button size="medium" onClick={() => onShiftReplay?.(10)}>
+                      10根 →
+                    </Button>
+                  </Space.Compact>
+                </>
               )}
               <Button
                 size="medium"
