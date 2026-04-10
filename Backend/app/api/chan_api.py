@@ -1,8 +1,21 @@
 from fastapi import APIRouter, HTTPException
 from app.models.schemas import ChanRequest, ChanResponse
 from app.services.chan_service import ChanService
+import akshare as ak
 
 router = APIRouter(prefix="/api", tags=["chan"])
+
+_trading_dates_cache = None
+
+
+@router.get("/trading-dates")
+async def get_trading_dates():
+    """获取A股交易日列表"""
+    global _trading_dates_cache
+    if _trading_dates_cache is None:
+        df = ak.tool_trade_date_hist_sina()
+        _trading_dates_cache = df["trade_date"].tolist()
+    return {"dates": _trading_dates_cache}
 
 
 @router.post("/chan/calculate", response_model=ChanResponse)

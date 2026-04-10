@@ -25,6 +25,16 @@ function ChartPage() {
 
   const stockSearch = useStockSearch();
   const initialLoadRef = useRef(true);
+  const tradingDatesRef = useRef(null);
+
+  // 进入回放模式时加载交易日列表
+  useEffect(() => {
+    if (currentStock.replayActive && !tradingDatesRef.current) {
+      chanApi.getTradingDates().then((dates) => {
+        tradingDatesRef.current = dates;
+      });
+    }
+  }, [currentStock.replayActive]);
 
   useEffect(() => {
     const selectedStock = localStorage.getItem("selectedStock");
@@ -172,6 +182,7 @@ function ChartPage() {
           favorites={favorites}
           currentStock={currentStock}
           stockSearch={stockSearch}
+          tradingDatesRef={tradingDatesRef}
           onStockChange={handleStockChange}
           onKlineTypeChange={handleKlineTypeChange}
           onLimitChange={handleLimitChange}

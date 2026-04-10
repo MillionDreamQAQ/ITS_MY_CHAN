@@ -23,6 +23,11 @@ export const chanApi = {
   calculateChan: async (request: ChanRequest): Promise<ChanResponse> => {
     const response = await apiClient.post<ChanResponse>('/chan/calculate', request);
     return response.data;
+  },
+
+  getTradingDates: async (): Promise<string[]> => {
+    const response = await apiClient.get<{ dates: string[] }>('/trading-dates');
+    return response.data.dates;
   }
 };
 

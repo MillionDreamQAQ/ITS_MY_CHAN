@@ -32,6 +32,7 @@ import {
   ChartContextMenu,
   StockSearchModal,
 } from "./components";
+import { shiftReplayTime } from "../../utils/replayUtils";
 
 const ChartContainer = ({
   data,
@@ -41,6 +42,7 @@ const ChartContainer = ({
   favorites = [],
   currentStock = {},
   stockSearch = {},
+  tradingDatesRef,
   canSearch = true,
   showTitle = true,
   canEditLevel = true,
@@ -231,31 +233,42 @@ const ChartContainer = ({
 
   const shiftReplay = useCallback(
     (offset) => {
-      const base = currentStock.replayDate
-        ? dayjs(currentStock.replayDate)
-        : dayjs();
-
-      // 根据K线类型决定偏移单位
-      const unitMap = {
-        "1m": "minute",
-        "5m": "minute",
-        "15m": "minute",
-        "30m": "minute",
-        "60m": "hour",
-        day: "day",
-        week: "week",
-        month: "month",
-      };
-      const stepMap = { "5m": 5, "15m": 15, "30m": 30, "60m": 60 };
       const klineType = currentStock.klineType || "day";
-      const unit = unitMap[klineType] || "day";
-      const step = stepMap[klineType] || 1;
-      const totalOffset = offset * step;
+      if (!currentStock.replayDate) return;
+      const tradingDates = tradingDatesRef?.current;
+      if (!tradingDates || tradingDates.length === 0) return;
 
-      const newDate = base.add(totalOffset, unit);
-      onReplayDateChange?.(newDate.format("YYYY-MM-DD HH:mm"));
+      // 日线及以上：通过交易日列表索引跳转
+      if (["day", "week", "month"].includes(klineType)) {
+        const dateStr = currentStock.replayDate.split(" ")[0];
+        let idx = tradingDates.indexOf(dateStr);
+        if (idx === -1) {
+          // 找最近的小于等于的交易日
+          for (let i = tradingDates.length - 1; i >= 0; i--) {
+            if (tradingDates[i] <= dateStr) { idx = i; break; }
+          }
+        }
+        if (idx === -1) return;
+        const targetIdx = idx + offset;
+        if (targetIdx < 0 || targetIdx >= tradingDates.length) return;
+        onReplayDateChange?.(tradingDates[targetIdx] + " 15:00");
+        return;
+      }
+
+      // 分钟级：用规则跳转，自动跳过休盘时间
+      const stepMap = { "1m": 1, "5m": 5, "15m": 15, "30m": 30, "60m": 60 };
+      const stepMinutes = stepMap[klineType] || 1;
+      const newDate = shiftReplayTime(
+        currentStock.replayDate,
+        offset,
+        stepMinutes,
+        tradingDates,
+      );
+      if (newDate) {
+        onReplayDateChange?.(newDate);
+      }
     },
-    [currentStock.replayDate, currentStock.klineType, onReplayDateChange],
+    [currentStock.replayDate, currentStock.klineType, onReplayDateChange, tradingDatesRef],
   );
 
   // 辅助函数：添加线段系列
