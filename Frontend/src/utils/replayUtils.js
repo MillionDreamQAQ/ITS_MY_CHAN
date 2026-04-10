@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 
-// A股交易时段（分钟数表示，从00:00起算）
+// A股交易时段边界（分钟数，从00:00起算）
 const MORNING_START = 9 * 60 + 30; // 09:30
 const MORNING_END = 11 * 60 + 30; // 11:30
 const AFTERNOON_START = 13 * 60; // 13:00
@@ -10,29 +10,78 @@ function timeToMinutes(date) {
   return date.hour() * 60 + date.minute();
 }
 
+function applyMinutes(date, totalMinutes) {
+  return date.hour(Math.floor(totalMinutes / 60)).minute(totalMinutes % 60);
+}
+
 /**
- * 判断某时间是否在交易时段内
+ * 生成某周期在某个交易时段内的所有有效K线时间点（分钟数）
+ * @param {number} firstKline - 时段内第一根K线的时间（分钟数）
+ * @param {number} lastKline - 时段内最后一根K线的时间（分钟数）
+ * @param {number} step - 周期（分钟）
+ * @returns {number[]}
  */
-function isInTradingSession(date) {
-  const mins = timeToMinutes(date);
-  return (
-    (mins >= MORNING_START && mins <= MORNING_END) ||
-    (mins >= AFTERNOON_START && mins <= AFTERNOON_END)
-  );
+function generateSessionTimes(firstKline, lastKline, step) {
+  const times = [];
+  for (let t = firstKline; t <= lastKline; t += step) {
+    times.push(t);
+  }
+  return times;
+}
+
+/**
+ * 各周期的K线时间配置
+ * morningFirst: 上午第一根K线时间
+ * afternoonFirst: 下午第一根K线时间
+ */
+const KLINE_TIME_CONFIG = {
+  1:  { morningFirst: 9 * 60 + 31,  afternoonFirst: 13 * 60 + 1 },
+  5:  { morningFirst: 9 * 60 + 35,  afternoonFirst: 13 * 60 + 5 },
+  15: { morningFirst: 9 * 60 + 45,  afternoonFirst: 13 * 60 + 15 },
+  30: { morningFirst: 9 * 60 + 30,  afternoonFirst: 13 * 60 + 30 },
+  60: { morningFirst: 10 * 60 + 30, afternoonFirst: 14 * 60 },
+};
+
+/**
+ * 获取某周期一天中所有有效K线时间点（分钟数）
+ */
+function getValidTimes(stepMinutes) {
+  const config = KLINE_TIME_CONFIG[stepMinutes];
+  if (!config) return [];
+
+  const morning = generateSessionTimes(config.morningFirst, MORNING_END, stepMinutes);
+  const afternoon = generateSessionTimes(config.afternoonFirst, AFTERNOON_END, stepMinutes);
+  return [...morning, ...afternoon];
+}
+
+/**
+ * 在有效时间数组中找到 >= mins 的下一个时间点，超出则返回 null
+ */
+function findNextTime(validTimes, mins) {
+  for (let i = 0; i < validTimes.length; i++) {
+    if (validTimes[i] >= mins) return validTimes[i];
+  }
+  return null;
+}
+
+/**
+ * 在有效时间数组中找到 <= mins 的上一个时间点，超出则返回 null
+ */
+function findPrevTime(validTimes, mins) {
+  for (let i = validTimes.length - 1; i >= 0; i--) {
+    if (validTimes[i] <= mins) return validTimes[i];
+  }
+  return null;
 }
 
 /**
  * 在交易日列表中查找下一个交易日
- * @param {string[]} tradingDates - 交易日列表 ["2024-01-02", ...]
- * @param {string} currentDateStr - 当前日期 "YYYY-MM-DD"
- * @returns {string|null} 下一个交易日 "YYYY-MM-DD"
  */
 function findNextTradingDay(tradingDates, currentDateStr) {
   const idx = tradingDates.indexOf(currentDateStr);
   if (idx >= 0 && idx < tradingDates.length - 1) {
     return tradingDates[idx + 1];
   }
-  // 不在列表中（可能日期时间部分非交易日），二分查找
   let lo = 0;
   let hi = tradingDates.length - 1;
   while (lo <= hi) {
@@ -48,9 +97,6 @@ function findNextTradingDay(tradingDates, currentDateStr) {
 
 /**
  * 在交易日列表中查找上一个交易日
- * @param {string[]} tradingDates - 交易日列表
- * @param {string} currentDateStr - 当前日期 "YYYY-MM-DD"
- * @returns {string|null} 上一个交易日 "YYYY-MM-DD"
  */
 function findPrevTradingDay(tradingDates, currentDateStr) {
   const idx = tradingDates.indexOf(currentDateStr);
@@ -72,76 +118,46 @@ function findPrevTradingDay(tradingDates, currentDateStr) {
 
 /**
  * 向前偏移一根K线（正向）
- * @param {dayjs.Dayjs} current - 当前时间
- * @param {number} stepMinutes - K线周期（分钟）
- * @param {string[]} tradingDates - 交易日列表
- * @returns {dayjs.Dayjs|null}
  */
 function shiftForwardOne(current, stepMinutes, tradingDates) {
-  let next = current.add(stepMinutes, "minute");
+  const next = current.add(stepMinutes, "minute");
   const mins = timeToMinutes(next);
   const dateStr = next.format("YYYY-MM-DD");
+  const validTimes = getValidTimes(stepMinutes);
 
-  // 落在交易时段内，直接返回
-  if (isInTradingSession(next)) {
-    return next;
+  // 找到下一个有效K线时间点
+  const snapped = findNextTime(validTimes, mins);
+  if (snapped !== null) {
+    return applyMinutes(next, snapped);
   }
 
-  // 落在午休区间 (11:30 ~ 13:00) -> snap 到 13:00
-  if (mins > MORNING_END && mins < AFTERNOON_START) {
-    return next.hour(13).minute(0);
-  }
-
-  // 落在收盘后 (> 15:00) 或当天没有交易时段（如周末）-> 跳到下一个交易日 09:30
-  if (mins > AFTERNOON_END) {
-    const nextDay = findNextTradingDay(tradingDates, dateStr);
-    if (!nextDay) return null;
-    return dayjs(nextDay).hour(9).minute(30);
-  }
-
-  // 落在开盘前 (< 09:30) -> snap 到 09:30
-  if (mins < MORNING_START) {
-    return next.hour(9).minute(30);
-  }
-
-  return next;
+  // 超过当天收盘，跳到下一个交易日的第一个K线时间
+  const nextDay = findNextTradingDay(tradingDates, dateStr);
+  if (!nextDay) return null;
+  const firstTime = validTimes[0]; // 下一个交易日的第一根K线
+  return dayjs(nextDay).hour(Math.floor(firstTime / 60)).minute(firstTime % 60);
 }
 
 /**
  * 向后偏移一根K线（反向）
- * @param {dayjs.Dayjs} current - 当前时间
- * @param {number} stepMinutes - K线周期（分钟）
- * @param {string[]} tradingDates - 交易日列表
- * @returns {dayjs.Dayjs|null}
  */
 function shiftBackwardOne(current, stepMinutes, tradingDates) {
-  let prev = current.subtract(stepMinutes, "minute");
+  const prev = current.subtract(stepMinutes, "minute");
   const mins = timeToMinutes(prev);
   const dateStr = prev.format("YYYY-MM-DD");
+  const validTimes = getValidTimes(stepMinutes);
 
-  // 落在交易时段内，直接返回
-  if (isInTradingSession(prev)) {
-    return prev;
+  // 找到上一个有效K线时间点
+  const snapped = findPrevTime(validTimes, mins);
+  if (snapped !== null) {
+    return applyMinutes(prev, snapped);
   }
 
-  // 落在午休区间 (11:30 ~ 13:00) -> snap 到 11:30
-  if (mins > MORNING_END && mins < AFTERNOON_START) {
-    return prev.hour(11).minute(30);
-  }
-
-  // 落在开盘前 (< 09:30) -> 跳到上一个交易日 15:00
-  if (mins < MORNING_START) {
-    const prevDay = findPrevTradingDay(tradingDates, dateStr);
-    if (!prevDay) return null;
-    return dayjs(prevDay).hour(15).minute(0);
-  }
-
-  // 落在收盘后 (> 15:00) -> snap 到 15:00
-  if (mins > AFTERNOON_END) {
-    return prev.hour(15).minute(0);
-  }
-
-  return prev;
+  // 早于当天开盘，跳到上一个交易日的最后一个K线时间
+  const prevDay = findPrevTradingDay(tradingDates, dateStr);
+  if (!prevDay) return null;
+  const lastTime = validTimes[validTimes.length - 1]; // 上一个交易日的最后一根K线
+  return dayjs(prevDay).hour(Math.floor(lastTime / 60)).minute(lastTime % 60);
 }
 
 /**
